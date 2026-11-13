@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* optional global styles */
+body {
+  font-family: Poppins, sans-serif;
+}
+.hero-title {
+  font-size: 4rem;
+  font-weight: bold;
+}
