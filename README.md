@@ -12,6 +12,10 @@
 ## 📖 Project Overview
 A complete full-stack e-commerce platform featuring a modern UI/UX on the frontend and a robust, scalable backend API. This project uses a **Monorepo** architecture, housing both frontend and backend codebases in a single repository for streamlined development and Docker deployment.
 
+<img width="2880" height="10297" alt="Ecommerce_websites" src="https://github.com/user-attachments/assets/bb410b62-d184-4444-a280-f8ebc8b89e04" />
+
+
+
 ## ✨ Key Features
 * **User Authentication:** Secure registration and login.
 * **Product Management:** Browse, search, and filter products seamlessly.
