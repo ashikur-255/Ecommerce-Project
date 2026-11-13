@@ -33,3 +33,38 @@ Ecommerce-Project/
 ├── backend/              # Backend application (ASP.NET Core API)
 ├── docker-compose.yml    # Docker configuration for full-stack deployment
 └── README.md             # Project documentation
+
+🚀 Getting Started
+Prerequisites
+Make sure you have the following installed on your local machine:
+Git
+Docker Desktop
+Node.js (If running frontend locally without Docker)
+.NET SDK (If running backend locally without Docker)
+
+Installation & Setup
+
+1. Clone the repository:
+git clone [https://github.com/ashikur-255/Ecommerce-Web.git](https://github.com/ashikur-255/Ecommerce-Web.git)
+cd Ecommerce-Web
+
+2. Run with Docker (Recommended):
+To run both the frontend and backend simultaneously using Docker Compose:
+docker-compose up --build -d
+Frontend will be accessible at: http://localhost:3000 (or your configured port)
+Backend API / Swagger will be accessible at: http://localhost:5000
+
+Running Locally (Without Docker)
+Backend:
+cd backend
+dotnet run
+
+Frontend:
+cd frontend
+npm install
+npm run dev
+
+👤 Author
+MD. ASHIKUR RAHMAN
+GitHub: @ashikur-255
+Portfolio: ashikurr-portfolio.netlify.app
