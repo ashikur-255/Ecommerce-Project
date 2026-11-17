@@ -61,6 +61,7 @@ export interface User {
   avatar?: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
+  createdAt?: string;
 }
 
 export interface AuthData {

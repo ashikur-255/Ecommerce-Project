@@ -11,6 +11,7 @@ const PROVIDER_STYLES: Record<Payment["provider"], { label: string; classes: str
   Nagad: { label: "Nagad", classes: "bg-orange-100 text-orange-700", icon: <FiSmartphone size={14} /> },
   Rocket: { label: "Rocket", classes: "bg-purple-100 text-purple-700", icon: <FiSmartphone size={14} /> },
   CashOnDelivery: { label: "Cash on Delivery", classes: "bg-green-100 text-green-700", icon: <FiTruck size={14} /> },
+  SslCommerz: { label: "SSLCommerz", classes: "bg-blue-100 text-blue-700", icon: <FiCreditCard size={14} /> },
 };
 
 export default function PaymentsManager() {

@@ -247,6 +247,13 @@ export interface Order {
   deliveryStatus?: string | null;
 }
 
+export interface OrderListResponse {
+  orders: Order[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface CreateOrderData {
   orderItems: {
     productId: number;
@@ -288,6 +295,20 @@ export interface CreateReviewData {
 // ═══════════════════════════════════════════════════════════════════════════
 //  PAYMENT
 // ═══════════════════════════════════════════════════════════════════════════
+
+/** Matches the admin payment record returned by GET /api/payments */
+export interface Payment {
+  id: number;
+  orderId?: number | null;
+  amount: number;
+  currency: string;
+  status: string;
+  provider: "Stripe" | "Bkash" | "Nagad" | "Rocket" | "CashOnDelivery" | "SslCommerz";
+  providerReference?: string | null;
+  providerTransactionId?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+}
 
 export interface CreatePaymentIntentData {
   amount: number;

@@ -1,5 +1,6 @@
 // services/api/index.ts
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from "axios";
+import type { Payment } from "../types";
 // ─── Type Definitions ──────────────────────────────────────────────────────
 
 // Generic API Response
@@ -15,7 +16,7 @@ export interface User {
   name: string;
   email: string | null;
   phone: string | null;
-  role: string;
+  role: "admin" | "customer";
   avatar?: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
@@ -663,10 +664,10 @@ export const paymentService = {
 
 export const adminPaymentService = {
   getAll: (params?: { page?: number; limit?: number; provider?: string; status?: string }): 
-    Promise<AxiosResponse<ApiResponse<{ payments: unknown[]; total: number; page: number; totalPages: number }>>> =>
+    Promise<AxiosResponse<ApiResponse<{ payments: Payment[]; total: number; page: number; totalPages: number }>>> =>
     api.get("/payments", { params }),
 
-  getById: (id: number): Promise<AxiosResponse<ApiResponse<unknown>>> =>
+  getById: (id: number): Promise<AxiosResponse<ApiResponse<Payment>>> =>
     api.get(`/payments/${id}`),
 };
 
