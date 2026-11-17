@@ -7,7 +7,7 @@ export interface User {
   name: string;
   email: string | null;
   phone: string | null;
-  role: "customer" | "admin";
+  role: "customer" | "admin" | string;
   avatar?: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
@@ -224,8 +224,8 @@ export interface ShippingAddress {
   phone: string;
 }
 
-export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
-export type OrderStatus = "processing" | "shipped" | "delivered" | "cancelled";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded" | string;
+export type OrderStatus = "processing" | "shipped" | "delivered" | "cancelled" | string;
 
 export interface Order {
   id: number;
@@ -238,13 +238,32 @@ export interface Order {
   totalAmount: number;
   paymentStatus: PaymentStatus;
   paymentIntentId: string;
-  paymentMethod: "Stripe" | "CashOnDelivery" | "Bkash" | "Nagad" | "Rocket";
+  paymentMethod: string;
   orderStatus: OrderStatus;
   createdAt: string;
   updatedAt: string;
   consignmentId?: string | null;
   trackingCode?: string | null;
   deliveryStatus?: string | null;
+}
+
+export interface OrderListResponse {
+  orders: Order[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface Payment {
+  id: number;
+  orderId?: number | null;
+  amount: number;
+  currency: string;
+  provider: "Stripe" | "Bkash" | "Nagad" | "Rocket" | "CashOnDelivery" | "SslCommerz" | string;
+  providerReference?: string | null;
+  providerTransactionId?: string | null;
+  status: string;
+  createdAt: string;
 }
 
 export interface CreateOrderData {

@@ -1,0 +1,124 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecommerce_sqlserver
+    restart: always
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      MSSQL_PID: "Express"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - ecommerce_internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecommerce_backend
+    restart: always
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=EcommerceDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - Jwt__Secret=${JWT_SECRET}
+      - Jwt__Issuer=${JWT_ISSUER:-EcommerceAPI}
+      - Jwt__Audience=${JWT_AUDIENCE:-EcommerceClient}
+      - Cors__AllowedOrigins__0=https://${DOMAIN_NAME}
+      - Cors__AllowedOrigins__1=https://www.${DOMAIN_NAME}
+      - Email__FromName=${EMAIL_FROM_NAME:-Adidas Store}
+      - Email__FromEmail=${EMAIL_FROM_EMAIL}
+      - Email__Host=${EMAIL_HOST:-smtp.gmail.com}
+      - Email__Port=${EMAIL_PORT:-587}
+      - Email__Username=${EMAIL_USERNAME}
+      - Email__Password=${EMAIL_PASSWORD}
+      - Email__EnableSsl=true
+      - SmsNetBd__ApiKey=${SMS_API_KEY}
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+      - Bkash__AppKey=${BKASH_APP_KEY}
+      - Bkash__AppSecret=${BKASH_APP_SECRET}
+      - Bkash__Username=${BKASH_USERNAME}
+      - Bkash__Password=${BKASH_PASSWORD}
+      - Bkash__CallbackBaseUrl=https://${DOMAIN_NAME}
+      - Bkash__FrontendBaseUrl=https://${DOMAIN_NAME}
+      - SSLCommerz__StoreId=${SSLCOMMERZ_STORE_ID}
+      - SSLCommerz__StorePasswd=${SSLCOMMERZ_STORE_PASSWD}
+      - SSLCommerz__SuccessUrl=https://${DOMAIN_NAME}/api/sslcommerz/success
+      - SSLCommerz__FailUrl=https://${DOMAIN_NAME}/api/sslcommerz/fail
+      - SSLCommerz__CancelUrl=https://${DOMAIN_NAME}/api/sslcommerz/cancel
+      - SSLCommerz__IpnUrl=https://${DOMAIN_NAME}/api/sslcommerz/ipn
+      - SSLCommerz__FrontendUrl=https://${DOMAIN_NAME}
+      - Steadfast__ApiKey=${STEADFAST_API_KEY}
+      - Steadfast__SecretKey=${STEADFAST_SECRET_KEY}
+    volumes:
+      - backend_uploads:/app/wwwroot/uploads
+    networks:
+      - ecommerce_internal
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=/api
+        - VITE_API_URL=/api
+        - VITE_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+    container_name: ecommerce_frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - ecommerce_internal
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: ecommerce_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - ecommerce_internal
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: ecommerce_certbot
+    restart: always
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - ecommerce_internal
+
+volumes:
+  mssql_data:
+  backend_uploads:
+  certbot_conf:
+  certbot_www:
+
+networks:
+  ecommerce_internal:
+    driver: bridge
+

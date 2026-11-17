@@ -57,10 +57,11 @@ export interface User {
   name: string;
   email: string | null;
   phone: string | null;
-  role: "admin" | "customer";
+  role: "admin" | "customer" | string;
   avatar?: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
+  createdAt?: string;
 }
 
 export interface AuthData {

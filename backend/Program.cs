@@ -1,4 +1,4 @@
-﻿using EcommerceAPI.Config;
+using EcommerceAPI.Config;
 using EcommerceAPI.Data;
 using EcommerceAPI.Middleware;
 using EcommerceAPI.Repositories;
@@ -6,6 +6,7 @@ using EcommerceAPI.Repositories.Interfaces;
 using EcommerceAPI.Services;
 using EcommerceAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -170,8 +171,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// ── Forwarded Headers (for Reverse Proxy / Docker / Nginx) ──────────────────
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // ── Auto-migrate on startup ──────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())

@@ -36,7 +36,7 @@ export default function PaymentsManager() {
   page,
   limit: 20,
 });
-        setPayments(res.data.data.payments);
+        setPayments(res.data.data.payments as Payment[]);
       } catch (err) {
         // ✅ show the REAL reason instead of a generic message
         const error = err as AxiosError<{ message: string }>;
