@@ -1,7 +1,9 @@
 // src/utils/image.ts
 
 const rawApiUrl = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5085/api"
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:5085/api" : "https://ecommerce-backend-api-j6z4.onrender.com/api")
 )
   .trim()
   .replace(/\/+$/, "");
