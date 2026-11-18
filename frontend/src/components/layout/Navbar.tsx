@@ -146,23 +146,32 @@ useEffect(() => {
   // Home / Logo instant top redirection
   const handleHomeClick = useCallback(
     (e: React.MouseEvent) => {
+      e.preventDefault();
       setMenuOpen(false);
       setCartOpen(false);
       setUserOpen(false);
 
       // Instant redirection to the top section of the page
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
 
-      if (location.pathname === "/") {
-        e.preventDefault();
-        if (location.hash) {
-          navigate("/", { replace: true });
-        }
-      } else {
-        navigate("/");
-      }
+      // Ensure root URL without trailing hash
+      navigate("/", { replace: true });
+
+      // Guarantee top section view across all mobile & desktop browsers
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 50);
     },
-    [location.pathname, location.hash, navigate]
+    [navigate]
   );
 
   // Search handler
@@ -197,8 +206,8 @@ const handleLogout = useCallback(() => {
         scrolled ? "shadow-md" : "shadow-sm"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 lg:h-20 gap-1.5 sm:gap-4">
           {/* Logo */}
           <Link 
             to="/" 
@@ -214,7 +223,7 @@ const handleLogout = useCallback(() => {
               <img 
                 src={bdfLogo} 
                 alt="BDFashions Logo" 
-                className="relative h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                className="relative h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 object-contain rounded-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
                 onError={(e) => {
                   e.currentTarget.src = "/bdf-logo.png";
                 }}
@@ -223,7 +232,7 @@ const handleLogout = useCallback(() => {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 flex-shrink-0">
             {navLinks.map((l) => (
               <Link
                 key={l.to}
@@ -236,30 +245,33 @@ const handleLogout = useCallback(() => {
             ))}
           </nav>
 
-          {/* Icons */}
-          <div className="flex items-center gap-3 sm:gap-5">
-            {/* Search - Desktop */}
-            <div className="hidden md:flex items-center relative" ref={searchRef}>
-              <form
-                onSubmit={handleSearch}
-                className="relative flex items-center w-64 lg:w-80 rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-300 focus-within:border-primary focus-within:shadow-md"
+          {/* Search Box - Compact Pill in Top Row (Mobile & Desktop) */}
+          <div className="flex items-center flex-1 min-w-0 max-w-[170px] xs:max-w-[210px] sm:max-w-[270px] md:max-w-[320px] lg:w-80 mx-1 sm:mx-2" ref={searchRef}>
+            <form
+              onSubmit={handleSearch}
+              className="relative flex items-center w-full rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-300 focus-within:border-primary focus-within:shadow-md"
+            >
+              <FiSearch className="absolute left-2.5 sm:left-3 text-gray-400 text-xs sm:text-base pointer-events-none" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                aria-label="Search products"
+                className="w-full py-1.5 sm:py-2 pl-7 sm:pl-9 pr-7 sm:pr-9 bg-transparent outline-none text-xs sm:text-sm placeholder:text-gray-400"
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                className="absolute right-1 flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full bg-primary text-white transition-all duration-300 hover:bg-dark active:scale-95 flex-shrink-0"
               >
-                <FiSearch className="absolute left-3 text-gray-400 text-lg" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products..."
-                  className="w-full py-2 pl-10 pr-12 bg-transparent outline-none text-sm placeholder:text-gray-400"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-1 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-all duration-300 hover:bg-dark hover:scale-105 active:scale-95"
-                >
-                  <FiSearch className="text-base" />
-                </button>
-              </form>
-            </div>
+                <FiSearch className="text-xs sm:text-sm" />
+              </button>
+            </form>
+          </div>
+
+          {/* Icons */}
+          <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-4 flex-shrink-0">
 
             {/* Wishlist */}
             <Link
@@ -543,31 +555,6 @@ const handleLogout = useCallback(() => {
               {menuOpen ? <FiX /> : <FiMenu />}
             </button>
           </div>
-        </div>
-
-        {/* Search - Mobile View (Same premium pill design as Desktop) */}
-        <div className="md:hidden pb-3 pt-0.5">
-          <form
-            onSubmit={handleSearch}
-            className="relative flex items-center w-full rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-300 focus-within:border-primary focus-within:shadow-md"
-          >
-            <FiSearch className="absolute left-3.5 text-gray-400 text-base pointer-events-none" />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
-              aria-label="Search products"
-              className="w-full py-2 pl-10 pr-12 bg-transparent outline-none text-sm placeholder:text-gray-400"
-            />
-            <button
-              type="submit"
-              aria-label="Search"
-              className="absolute right-1 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-all duration-300 hover:bg-dark active:scale-95"
-            >
-              <FiSearch className="text-base" />
-            </button>
-          </form>
         </div>
 
         {/* Mobile Menu */}

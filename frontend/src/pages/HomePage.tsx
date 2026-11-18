@@ -171,7 +171,7 @@ useEffect(() => {
     <main>
       <ScrollToTopButton />
       {/* HERO */}
-      <section id="hero" className="relative min-h-screen bg-black text-white overflow-hidden pt-28 md:pt-20 lg:pt-20">
+      <section id="hero" className="relative min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20">
         <div className="absolute inset-0">
           <img
             src="/Logo of BDF.png"
