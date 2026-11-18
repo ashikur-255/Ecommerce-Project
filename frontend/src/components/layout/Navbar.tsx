@@ -18,7 +18,7 @@ import { getImageUrl } from "../../utils/image";
 import type { CartItem } from "../../types";
 // ⬇️ import যোগ করো (উপরে অন্য imports-এর সাথে)
 import { resetWishlist } from "../../store/slices/wishlistSlice";
-import bdfLogo from "../../assets/BDF LOGO.png";
+import bdfLogo from "../../assets/BDFs.png";
 
 
 export default function Navbar() {
@@ -195,17 +195,23 @@ const handleLogout = useCallback(() => {
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center gap-2.5 font-bold text-dark text-lg sm:text-xl hover:opacity-90 transition-opacity flex-shrink-0"
+            className="group flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105"
+            aria-label="BDFashions Home"
           >
-            <img 
-              src={bdfLogo} 
-              alt="BDFashions Logo" 
-              className="h-10 w-10 rounded-full object-contain bg-white p-0.5 shadow-sm"
-              onError={(e) => {
-                e.currentTarget.src = "/BDF LOGO.png";
-              }}
-            />
-            <span className="font-extrabold text-dark tracking-tight">BDFashions</span>
+            <div className="relative flex items-center justify-center">
+              <div 
+                aria-hidden="true" 
+                className="pointer-events-none absolute inset-0 rounded-full bg-[#FDA702]/25 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100" 
+              />
+              <img 
+                src={bdfLogo} 
+                alt="BDFashions Logo" 
+                className="relative h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                onError={(e) => {
+                  e.currentTarget.src = "/bdf-logo.png";
+                }}
+              />
+            </div>
           </Link>
 
           {/* Desktop Nav */}

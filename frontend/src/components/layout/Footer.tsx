@@ -10,11 +10,10 @@ import {
   FiMapPin,
   FiClock,
   FiArrowRight,
-  FiArrowUp,
   FiShield,
   FiCheckCircle,
 } from "react-icons/fi";
-import bdfLogo from "../../assets/BDF LOGO.png";
+import bdfLogo from "../../assets/BDFs.png";
 import { useAppSelector } from "../../hooks/redux";
 
 const socialLinks = [
@@ -383,16 +382,6 @@ export default function Footer() {
                   <Icon size={17} />
                 </a>
               ))}
-
-              <button
-                type="button"
-                onClick={handleScrollToTop}
-                aria-label="Back to top"
-                className="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-dark px-3.5 py-2.5 text-xs font-bold text-[#FDA702] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#082c36] hover:shadow-md"
-              >
-                <span>Top</span>
-                <FiArrowUp size={14} />
-              </button>
             </div>
           </div>
         </div>
