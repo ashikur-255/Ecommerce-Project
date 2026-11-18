@@ -35,7 +35,6 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const cartRef = useRef<HTMLDivElement>(null);
@@ -74,33 +73,19 @@ useEffect(() => {
     }
   }, [dispatch, user]);
 
-  // Close search on route change - using setTimeout to avoid sync setState
+  // Reset search query on route change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setSearchOpen(false);
       setSearchQuery("");
     }, 0);
 
     return () => clearTimeout(timeoutId);
   }, [location.pathname]);
 
-  // Handle click outside search
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setSearchOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   // Handle escape key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setSearchOpen(false);
         setSearchQuery("");
       }
     };
@@ -158,6 +143,28 @@ useEffect(() => {
     );
   }, [dispatch]);
 
+  // Home / Logo instant top redirection
+  const handleHomeClick = useCallback(
+    (e: React.MouseEvent) => {
+      setMenuOpen(false);
+      setCartOpen(false);
+      setUserOpen(false);
+
+      // Instant redirection to the top section of the page
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+      if (location.pathname === "/") {
+        e.preventDefault();
+        if (location.hash) {
+          navigate("/", { replace: true });
+        }
+      } else {
+        navigate("/");
+      }
+    },
+    [location.pathname, location.hash, navigate]
+  );
+
   // Search handler
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +174,7 @@ useEffect(() => {
     navigate(`/products?search=${encodeURIComponent(query)}`);
     setSearchQuery("");
     setSearchOpen(false);
+    setMenuOpen(false);
   }, [searchQuery, navigate]);
 
   // Logout handler — বদলাও
@@ -195,6 +203,7 @@ const handleLogout = useCallback(() => {
           {/* Logo */}
           <Link 
             to="/" 
+            onClick={handleHomeClick}
             className="group flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105"
             aria-label="BDFashions Home"
           >
@@ -220,6 +229,7 @@ const handleLogout = useCallback(() => {
               <Link
                 key={l.to}
                 to={l.to}
+                onClick={l.to === "/" ? handleHomeClick : undefined}
                 className="text-gray-800 font-semibold text-[15px] hover:text-primary transition-colors"
               >
                 {l.label}
@@ -251,38 +261,6 @@ const handleLogout = useCallback(() => {
                 </button>
               </form>
             </div>
-
-            {/* Search - Mobile Toggle */}
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="md:hidden text-dark hover:text-primary text-xl"
-              aria-label="Toggle search"
-            >
-              <FiSearch />
-            </button>
-
-            {/* Mobile Search Overlay */}
-            {searchOpen && (
-              <div className="absolute top-full left-0 right-0 bg-white p-4 shadow-lg md:hidden">
-                <form onSubmit={handleSearch} className="relative">
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products..."
-                    className="w-full py-2 pl-10 pr-12 border border-gray-200 rounded-lg outline-none focus:border-primary text-sm"
-                    autoFocus
-                  />
-                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <button
-                    type="submit"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white"
-                  >
-                    <FiSearch className="text-base" />
-                  </button>
-                </form>
-              </div>
-            )}
 
             {/* Wishlist */}
             <Link
@@ -568,6 +546,31 @@ const handleLogout = useCallback(() => {
           </div>
         </div>
 
+        {/* Search - Mobile View (Same premium pill design as Desktop) */}
+        <div className="md:hidden pb-3 pt-0.5">
+          <form
+            onSubmit={handleSearch}
+            className="relative flex items-center w-full rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-300 focus-within:border-primary focus-within:shadow-md"
+          >
+            <FiSearch className="absolute left-3.5 text-gray-400 text-base pointer-events-none" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              aria-label="Search products"
+              className="w-full py-2 pl-10 pr-12 bg-transparent outline-none text-sm placeholder:text-gray-400"
+            />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="absolute right-1 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-all duration-300 hover:bg-dark active:scale-95"
+            >
+              <FiSearch className="text-base" />
+            </button>
+          </form>
+        </div>
+
         {/* Mobile Menu */}
         {menuOpen && (
           <nav className="lg:hidden pb-4 border-t pt-4 flex flex-col gap-2 animate-fadeIn">
@@ -575,7 +578,12 @@ const handleLogout = useCallback(() => {
               <Link
                 key={l.to}
                 to={l.to}
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => {
+                  setMenuOpen(false);
+                  if (l.to === "/") {
+                    handleHomeClick(e);
+                  }
+                }}
                 className="text-dark font-medium hover:text-primary transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-50"
               >
                 {l.label}
