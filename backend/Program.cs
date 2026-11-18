@@ -1,4 +1,4 @@
-﻿using EcommerceAPI.Config;
+using EcommerceAPI.Config;
 using EcommerceAPI.Data;
 using EcommerceAPI.Middleware;
 using EcommerceAPI.Repositories;
@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sql => sql.EnableRetryOnFailure(3)));
 
