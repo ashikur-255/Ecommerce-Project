@@ -312,14 +312,20 @@ export interface SteadfastCreateOrderResponse {
 
 // ─── API Client ──────────────────────────────────────────────────────────
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5085/api";
+const rawApiUrl = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5085/api"
+)
+  .trim()
+  .replace(/\/+$/, "");
+
+const BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 65000, // 65s timeout to handle Render free-tier cold starts
 });
 
 // ─── Request Interceptor ──────────────────────────────────────────────────

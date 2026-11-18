@@ -120,13 +120,35 @@ if (!string.IsNullOrEmpty(stripeKey))
 }
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-var allowedOrigins = builder.Configuration
+var allowedOrigins = (builder.Configuration
     .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+    .Get<string[]>() ?? Array.Empty<string>())
+    .Select(o => o.Trim().TrimEnd('/'))
+    .Where(o => !string.IsNullOrEmpty(o))
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+allowedOrigins.Add("https://clickebd.xyz");
+allowedOrigins.Add("https://www.clickebd.xyz");
+allowedOrigins.Add("http://localhost:5173");
+allowedOrigins.Add("http://localhost:3000");
 
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  var normalized = origin.Trim().TrimEnd('/');
+                  if (allowedOrigins.Contains(normalized))
+                      return true;
+
+                  if (Uri.TryCreate(normalized, UriKind.Absolute, out var uri))
+                  {
+                      return uri.Host.Equals("clickebd.xyz", StringComparison.OrdinalIgnoreCase)
+                          || uri.Host.EndsWith(".clickebd.xyz", StringComparison.OrdinalIgnoreCase)
+                          || uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase);
+                  }
+
+                  return false;
+              })
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()));
@@ -207,11 +229,13 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseCors("AllowFrontend");
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseStaticFiles();
-app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGet("/", () => Results.Ok(new { status = "ok", service = "Ecommerce API" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.MapControllers();
 
 app.Run();

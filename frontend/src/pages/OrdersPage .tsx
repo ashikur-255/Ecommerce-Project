@@ -292,13 +292,7 @@ export default function OrdersPage() {
                       .map((item, i) => (
                         <img
                         key={i}
-                        src={
-                          item.productImage
-                            ? item.productImage.startsWith("http")
-                              ? item.productImage
-                              : `http://localhost:5085${item.productImage}`
-                            : "/placeholder.jpg"
-                        }
+                        src={getImageUrl(item.productImage)}
                         alt={item.productName}
                         loading="lazy"
                         onError={(e) => {

@@ -72,7 +72,12 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar ?? "");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "http://localhost:5085";
+  const API_URL = (
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5085/api"
+  )
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/api$/, "");
 
   const getAvatarUrl = (avatar: string | null | undefined) => {
     if (!avatar) return null;
