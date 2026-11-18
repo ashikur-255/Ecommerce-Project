@@ -3,7 +3,6 @@ import {
   FiShoppingBag,
   FiAward,
   FiHeadphones,
-  FiArrowUpRight,
 } from "react-icons/fi";
 import Counter from "../common/Counter";
 
@@ -95,16 +94,16 @@ export default function StatsSection() {
   return (
     <section
       aria-label="Store performance statistics"
-      className="relative overflow-hidden bg-[#02171D] bg-gradient-to-b from-[#011115] via-[#02171D] to-[#011115] py-20 px-4 sm:px-6 lg:px-8 border-y border-white/10"
+      className="relative overflow-hidden bg-[#02171D] bg-gradient-to-b from-[#011115] via-[#02171D] to-[#011115] py-8 sm:py-10 px-4 sm:px-6 lg:px-8 border-y border-white/10"
     >
       {/* Ambient background glows */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-80 w-full max-w-4xl rounded-full bg-[#FDA702]/15 blur-[120px]"
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-48 w-full max-w-4xl rounded-full bg-[#FDA702]/15 blur-[100px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-40 right-10 h-72 w-72 rounded-full bg-orange-500/10 blur-[100px]"
+        className="pointer-events-none absolute -bottom-24 right-10 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]"
       />
 
       {/* Decorative top metallic hairline */}
@@ -114,7 +113,7 @@ export default function StatsSection() {
       />
 
       <div className="relative max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {stats.map(
             ({
               number,
@@ -127,56 +126,50 @@ export default function StatsSection() {
             }) => (
               <div
                 key={label}
-                className={`group relative rounded-3xl border border-white/10 bg-white/[0.03] p-7 sm:p-8 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/[0.06] ${accent.glow}`}
+                className={`group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.06] ${accent.glow}`}
               >
                 {/* Top card glossy highlight */}
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"
                 />
 
                 {/* Header: Icon + Badge */}
-                <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center justify-between gap-2 mb-3">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 shadow-inner transition-transform duration-300 group-hover:scale-110 ${accent.iconBg} ${accent.iconColor}`}
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 shadow-inner transition-transform duration-300 group-hover:scale-105 ${accent.iconBg} ${accent.iconColor}`}
                   >
-                    <Icon size={22} />
+                    <Icon size={17} />
                   </div>
 
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider backdrop-blur-sm ${accent.badgeBg} ${accent.badgeText}`}
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-sm ${accent.badgeBg} ${accent.badgeText}`}
                   >
                     <span>{badge}</span>
                   </span>
                 </div>
 
                 {/* Animated Stat Value */}
-                <div className="mt-2 flex items-baseline">
-                  <h3 className="text-4xl sm:text-5xl lg:text-[52px] font-black tracking-tight leading-none font-poppins">
+                <div className="flex items-baseline">
+                  <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight leading-none font-poppins">
                     <Counter
                       end={number}
                       suffix={suffix}
-                      duration={2200}
+                      duration={2000}
                       className={`bg-gradient-to-br ${accent.numberGradient} bg-clip-text text-transparent drop-shadow-sm font-black`}
                     />
                   </h3>
                 </div>
 
                 {/* Stat Label */}
-                <h4 className="mt-4 text-lg font-black text-white tracking-tight leading-snug">
+                <h4 className="mt-2 text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug">
                   {label}
                 </h4>
 
                 {/* Subtitle / Context description */}
-                <p className="mt-1.5 text-xs sm:text-sm font-medium text-gray-400 group-hover:text-gray-300 transition-colors">
+                <p className="mt-0.5 text-[11px] sm:text-xs font-medium text-gray-400 group-hover:text-gray-300 transition-colors truncate">
                   {description}
                 </p>
-
-                {/* Subtle bottom indicator */}
-                <div className="mt-5 flex items-center gap-1.5 text-[11px] font-bold text-gray-500 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:text-[#FDA702]">
-                  <span>Verified BDFashions Metric</span>
-                  <FiArrowUpRight size={13} />
-                </div>
               </div>
             )
           )}
