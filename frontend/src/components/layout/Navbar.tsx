@@ -18,6 +18,7 @@ import { getImageUrl } from "../../utils/image";
 import type { CartItem } from "../../types";
 // ⬇️ import যোগ করো (উপরে অন্য imports-এর সাথে)
 import { resetWishlist } from "../../store/slices/wishlistSlice";
+import bdfLogo from "../../assets/BDF LOGO.png";
 
 
 export default function Navbar() {
@@ -197,9 +198,9 @@ const handleLogout = useCallback(() => {
             className="flex items-center gap-2 font-bold text-dark text-lg hover:opacity-80 transition-opacity"
           >
             <img 
-              src="/src/assets/BDF LOGO.png" 
-              alt="FashionBD Logo" 
-              className="h-10 w-auto" // Adjust size as needed
+              src={bdfLogo} 
+              alt="BDFashions Logo" 
+              className="h-10 w-10 rounded-full object-contain bg-white p-0.5 shadow-sm"
             />
             <span className="hidden sm:inline">BDFashions</span>
           </Link>
