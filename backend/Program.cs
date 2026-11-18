@@ -1,3 +1,6 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// All using statements MUST come first in C# top-level programs
+// ══════════════════════════════════════════════════════════════════════════════
 using EcommerceAPI.Config;
 using EcommerceAPI.Data;
 using EcommerceAPI.Middleware;
@@ -13,35 +16,42 @@ using Stripe;
 using System.Text;
 using System.Text.Json.Serialization;
 
-// ── Npgsql: Fix DateTime vs timestamptz compatibility (MUST be before anything) ──
+// ── Npgsql: Fix DateTime ↔ timestamptz compatibility (MUST be before builder) ──
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Render / PaaS dynamic PORT binding ───────────────────────────────────────
+// ── Render / PaaS dynamic PORT binding ──────────────────────────────────────
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
 {
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
 
-// ── Database (PostgreSQL / Supabase) ─────────────────────────────────────────
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.EnableRetryOnFailure(3)));
+// ── Database ─────────────────────────────────────────────────────────────────
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? throw new InvalidOperationException("Database connection string is not configured.");
 
-// ── JWT Configuration ───────────────────────────────────────────────────────
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString, sql =>
+    {
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+    }));
+
+// ── JWT Configuration ────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Secret"]
+    ?? Environment.GetEnvironmentVariable("Jwt__Secret")
     ?? throw new InvalidOperationException("JWT Secret is not configured.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "EcommerceAPI";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "EcommerceClient";
 
 if (jwtKey.Length < 32)
-{
     throw new InvalidOperationException("JWT Secret must be at least 32 characters long.");
-}
 
 builder.Services.AddScoped<JwtService>();
 
@@ -86,86 +96,93 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
-
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 
-// ── bKash ─────────────────────────────────────────────────────────────────
+// ── bKash ────────────────────────────────────────────────────────────────────
 builder.Services.Configure<BkashSettings>(builder.Configuration.GetSection("Bkash"));
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<BkashTokenService>();
 builder.Services.AddHttpClient<BkashPaymentGateway>();
 builder.Services.AddScoped<PaymentRecordService>();
 
-// ── Email ─────────────────────────────────────────────────────────────────
-builder.Services.Configure<EmailSettings>(
-    builder.Configuration.GetSection("Email"));
+// ── Email ─────────────────────────────────────────────────────────────────────
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// ── SMS ────────────────────────────────────────────────────────────────────
-builder.Services.Configure<SmsNetBdSettings>(
-    builder.Configuration.GetSection("SmsNetBd"));
+// ── SMS ──────────────────────────────────────────────────────────────────────
+builder.Services.Configure<SmsNetBdSettings>(builder.Configuration.GetSection("SmsNetBd"));
 builder.Services.AddHttpClient<ISmsService, SmsNetBdService>();
 
-// ── SSLCommerz ──────────────────────────────────────────────────────────────
+// ── SSLCommerz ───────────────────────────────────────────────────────────────
 builder.Services.AddHttpClient("sslcommerz");
 builder.Services.AddScoped<SslCommerzService>();
 
-// ── SteadfastCourierService ────────────────────────────────────────────────
+// ── SteadfastCourierService ───────────────────────────────────────────────────
 builder.Services.Configure<SteadfastOptions>(builder.Configuration.GetSection("Steadfast"));
 builder.Services.AddHttpClient<SteadfastCourierService>();
 
 // ── Stripe ────────────────────────────────────────────────────────────────────
-var stripeKey = builder.Configuration["Stripe:SecretKey"];
+var stripeKey = builder.Configuration["Stripe:SecretKey"]
+    ?? Environment.GetEnvironmentVariable("Stripe__SecretKey");
 if (!string.IsNullOrEmpty(stripeKey))
 {
     StripeConfiguration.ApiKey = stripeKey;
 }
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-var allowedOrigins = (builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() ?? Array.Empty<string>())
-    .Select(o => o.Trim().TrimEnd('/'))
-    .Where(o => !string.IsNullOrEmpty(o))
-    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+var allowedOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    "https://clickebd.xyz",
+    "https://www.clickebd.xyz",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5085",
+};
 
-allowedOrigins.Add("https://clickebd.xyz");
-allowedOrigins.Add("https://www.clickebd.xyz");
-allowedOrigins.Add("http://localhost:5173");
-allowedOrigins.Add("http://localhost:3000");
+// Also read from config
+var configOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (configOrigins != null)
+{
+    foreach (var o in configOrigins)
+    {
+        var normalized = o.Trim().TrimEnd('/');
+        if (!string.IsNullOrEmpty(normalized))
+            allowedOrigins.Add(normalized);
+    }
+}
 
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
         policy.SetIsOriginAllowed(origin =>
-              {
-                  var normalized = origin.Trim().TrimEnd('/');
-                  if (allowedOrigins.Contains(normalized))
-                      return true;
+        {
+            if (string.IsNullOrEmpty(origin)) return false;
+            var normalized = origin.Trim().TrimEnd('/');
 
-                  if (Uri.TryCreate(normalized, UriKind.Absolute, out var uri))
-                  {
-                      return uri.Host.Equals("clickebd.xyz", StringComparison.OrdinalIgnoreCase)
-                          || uri.Host.EndsWith(".clickebd.xyz", StringComparison.OrdinalIgnoreCase)
-                          || uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase);
-                  }
+            if (allowedOrigins.Contains(normalized)) return true;
 
-                  return false;
-              })
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials()));
+            if (Uri.TryCreate(normalized, UriKind.Absolute, out var uri))
+            {
+                var host = uri.Host;
+                return host.Equals("clickebd.xyz", StringComparison.OrdinalIgnoreCase)
+                    || host.EndsWith(".clickebd.xyz", StringComparison.OrdinalIgnoreCase)
+                    || host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
+                    || host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
+        })
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()));
 
 // ── Controllers + JSON ────────────────────────────────────────────────────────
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter()
-        );
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.DefaultIgnoreCondition =
-            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+            JsonIgnoreCondition.WhenWritingNull;
     });
 
 // ── Swagger ───────────────────────────────────────────────────────────────────
@@ -174,9 +191,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Ecommerce API",
+        Title = "BDFashions Ecommerce API",
         Version = "v1",
-        Description = "ASP.NET Core Web API – E-Commerce System (PostgreSQL)"
+        Description = "ASP.NET Core Web API – BDFashions E-Commerce"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -206,13 +223,15 @@ builder.Services.AddSwaggerGen(c =>
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// ── Auto-migrate on startup ──────────────────────────────────────────────────
+// ── Auto-migrate on startup ───────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Database migration completed successfully.");
     }
     catch (Exception ex)
     {
@@ -222,26 +241,32 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────
-// Swagger enabled in all environments for debugging
+// Swagger available in ALL environments
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "BDFashions Ecommerce API v1");
     c.RoutePrefix = "swagger";
 });
 
+// HTTPS redirect only in Development (Render handles HTTPS termination)
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
 
+// CORS MUST come before Authentication/Authorization
 app.UseCors("AllowFrontend");
+
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/", () => Results.Ok(new { status = "ok", service = "Ecommerce API" }));
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
+// Health check endpoints
+app.MapGet("/", () => Results.Ok(new { status = "ok", service = "BDFashions Ecommerce API", version = "1.0" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 app.MapControllers();
 
 app.Run();
