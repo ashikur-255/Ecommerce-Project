@@ -142,7 +142,7 @@ useEffect(() => {
           limit: ORDERS_PER_PAGE,
         });
         if (!cancelled) {
-          setOrders(res.data.data.orders);
+          setOrders(res.data.data.orders as unknown as Order[]);
           setOrdersTotal(res.data.data.total || 0);
           setOrdersTotalPages(res.data.data.totalPages || 1);
         }

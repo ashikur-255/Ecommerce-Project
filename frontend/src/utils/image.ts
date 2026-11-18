@@ -1,7 +1,13 @@
 // src/utils/image.ts
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5085/api";
-const SERVER_URL = API_URL.replace("/api", "");
+const rawApiUrl = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:5085/api" : "https://ecommerce-backend-api-j6z4.onrender.com/api")
+)
+  .trim()
+  .replace(/\/+$/, "");
+const SERVER_URL = rawApiUrl.replace(/\/api$/, "");
 
 /**
  * Get the full URL for an image path

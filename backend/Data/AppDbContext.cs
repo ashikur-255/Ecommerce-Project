@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using EcommerceAPI.Models;
 
 namespace EcommerceAPI.Data;
@@ -33,7 +33,7 @@ public class AppDbContext : DbContext
         {
             e.HasIndex(u => u.Email).IsUnique();
             e.Property(u => u.Role).HasDefaultValue("customer");
-            e.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(u => u.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
         // ── Wishlist ──────────────────────────────────────────────────────────
         mb.Entity<Wishlist>(e =>
@@ -45,7 +45,7 @@ public class AppDbContext : DbContext
                 .IsUnique();
 
             e.Property(x => x.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             e.HasOne(x => x.User)
                 .WithMany(u => u.Wishlists)
@@ -69,7 +69,7 @@ public class AppDbContext : DbContext
             e.HasIndex(p => p.Brand);
             e.HasIndex(p => p.IsNew);
             e.HasIndex(p => p.IsFeatured);
-            e.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(p => p.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             e.Property(p => p.Rating).HasDefaultValue(0m);
             e.Property(p => p.ReviewCount).HasDefaultValue(0);
         });
@@ -97,8 +97,8 @@ public class AppDbContext : DbContext
             e.HasIndex(o => o.UserId);
             e.HasIndex(o => o.OrderStatus);
             e.HasIndex(o => o.PaymentStatus);
-            e.Property(o => o.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            e.Property(o => o.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(o => o.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.Property(o => o.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             e.HasOne(o => o.User)
              .WithMany(u => u.Orders)

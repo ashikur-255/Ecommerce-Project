@@ -1,5 +1,6 @@
 // services/api/index.ts
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from "axios";
+import type { Payment } from "../types";
 // ─── Type Definitions ──────────────────────────────────────────────────────
 
 // Generic API Response
@@ -15,7 +16,7 @@ export interface User {
   name: string;
   email: string | null;
   phone: string | null;
-  role: string;
+  role: "admin" | "customer";
   avatar?: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
@@ -311,14 +312,22 @@ export interface SteadfastCreateOrderResponse {
 
 // ─── API Client ──────────────────────────────────────────────────────────
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5085/api";
+const rawApiUrl = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:5085/api" : "https://ecommerce-backend-api-j6z4.onrender.com/api")
+)
+  .trim()
+  .replace(/\/+$/, "");
+
+const BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 65000, // 65s timeout to handle Render free-tier cold starts
 });
 
 // ─── Request Interceptor ──────────────────────────────────────────────────
@@ -663,10 +672,10 @@ export const paymentService = {
 
 export const adminPaymentService = {
   getAll: (params?: { page?: number; limit?: number; provider?: string; status?: string }): 
-    Promise<AxiosResponse<ApiResponse<{ payments: unknown[]; total: number; page: number; totalPages: number }>>> =>
+    Promise<AxiosResponse<ApiResponse<{ payments: Payment[]; total: number; page: number; totalPages: number }>>> =>
     api.get("/payments", { params }),
 
-  getById: (id: number): Promise<AxiosResponse<ApiResponse<unknown>>> =>
+  getById: (id: number): Promise<AxiosResponse<ApiResponse<Payment>>> =>
     api.get(`/payments/${id}`),
 };
 

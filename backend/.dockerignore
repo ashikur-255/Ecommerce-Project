@@ -3,7 +3,11 @@
 **/bin
 **/obj
 **/.vscode
+.gitignore
+*.user
+*.suo
 **/appsettings.Development.json
+.env
+.env.*
 wwwroot/uploads/**
 !wwwroot/uploads/.gitkeep
-

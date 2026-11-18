@@ -1,28 +1,26 @@
-# Stage 1: Build & Publish
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore as distinct layers
-COPY ["EcommerceAPI.csproj", "./"]
-RUN dotnet restore "EcommerceAPI.csproj"
+# Copy csproj and restore dependencies
+COPY EcommerceAPI.csproj ./
+RUN dotnet restore EcommerceAPI.csproj
 
-# Copy everything else and build release
-COPY . .
-RUN dotnet publish "EcommerceAPI.csproj" -c Release -o /app/publish /p:UseAppHost=false
+# Copy the rest of the source code and publish
+COPY . ./
+RUN dotnet publish EcommerceAPI.csproj -c Release -o /app/publish /p:UseAppHost=false
 
-# Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
-# Create directory for persistent uploads
-RUN mkdir -p /app/wwwroot/uploads
+# Ensure static upload directory exists
+RUN mkdir -p /app/wwwroot/uploads/products
 
-COPY --from=build /app/publish .
+COPY --from=build /app/publish ./
 
-# Environment settings
-ENV ASPNETCORE_URLS=http://+:5000
-ENV ASPNETCORE_ENVIRONMENT=Production
+# Default port for container (Program.cs also honors Render's PORT env var)
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
 
-EXPOSE 5000
 ENTRYPOINT ["dotnet", "EcommerceAPI.dll"]
-

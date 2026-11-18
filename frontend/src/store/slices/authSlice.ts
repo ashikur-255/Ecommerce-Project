@@ -9,7 +9,15 @@ import axios, { AxiosError, AxiosInstance } from "axios";
 // API CONFIGURATION
 // ============================================================================
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5085/api";
+const rawApiUrl = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://localhost:5085/api" : "https://ecommerce-backend-api-j6z4.onrender.com/api")
+)
+  .trim()
+  .replace(/\/+$/, "");
+
+const API_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 // Create axios instance with interceptors
 const api: AxiosInstance = axios.create({
@@ -17,7 +25,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 65000, // 65 seconds timeout to handle Render free-tier cold starts
 });
 
 // Request interceptor to add token
