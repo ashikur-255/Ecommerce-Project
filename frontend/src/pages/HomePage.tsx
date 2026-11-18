@@ -15,7 +15,7 @@ import { categoryService } from "../services/api";
 import StarRating from "../components/ui/StarRating";
 import { getImageUrl } from "../utils/image";
 import type { Category } from "../types";
-import Counter from "../components/common/Counter";
+import StatsSection from "../components/home/StatsSection";
 import ExclusiveClubSection from "../components/home/ExclusiveClubSection";
 import FlashSaleBanner from "../components/home/FlashSaleBanner";
 
@@ -206,34 +206,8 @@ useEffect(() => {
         </div>
       </section>
 
-      <section className="bg-dark text-white py-16 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div className="flex flex-col items-center justify-center">
-            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              <Counter end={10} suffix="K+" duration={2000} />
-            </h3>
-            <p className="text-sm sm:text-base text-gray-300 font-medium mt-2">Happy Customers</p>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              <Counter end={500} suffix="+" duration={2000} />
-            </h3>
-            <p className="text-sm sm:text-base text-gray-300 font-medium mt-2">Products</p>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              <Counter end={50} suffix="+" duration={2000} />
-            </h3>
-            <p className="text-sm sm:text-base text-gray-300 font-medium mt-2">Brands</p>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              <Counter end={24} suffix="/7" duration={2000} />
-            </h3>
-            <p className="text-sm sm:text-base text-gray-300 font-medium mt-2">Support</p>
-          </div>
-        </div>
-      </section>
+      {/* STATS & SOCIAL PROOF */}
+      <StatsSection />
 
       {/* CATEGORIES */}
       <section className="py-20 bg-white">
