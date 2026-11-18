@@ -1,7 +1,4 @@
-import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
-import type { AxiosError } from "axios";
 import {
   FiFacebook,
   FiTwitter,
@@ -16,15 +13,9 @@ import {
   FiArrowUp,
   FiShield,
   FiCheckCircle,
-  FiTruck,
-  FiRefreshCw,
-  FiHeadphones,
-  FiLock,
-  FiSend,
 } from "react-icons/fi";
 import bdfLogo from "../../assets/BDF LOGO.png";
 import { useAppSelector } from "../../hooks/redux";
-import { newsletterService } from "../../services/api";
 
 const socialLinks = [
   {
@@ -51,33 +42,6 @@ const socialLinks = [
     icon: FiTwitter,
     url: "https://x.com/Ashikur96e",
     label: "Twitter (X)",
-  },
-];
-
-const trustHighlights = [
-  {
-    icon: FiTruck,
-    title: "Fast Delivery",
-    subtitle: "Nationwide shipping",
-    to: "/shipping",
-  },
-  {
-    icon: FiRefreshCw,
-    title: "Easy Returns",
-    subtitle: "7-day return policy",
-    to: "/returns",
-  },
-  {
-    icon: FiLock,
-    title: "Secure Checkout",
-    subtitle: "256-bit SSL protected",
-    to: "/faq",
-  },
-  {
-    icon: FiHeadphones,
-    title: "Dedicated Support",
-    subtitle: "Quick customer care",
-    to: "/help",
   },
 ];
 
@@ -110,46 +74,8 @@ export default function Footer() {
   const { itemCount } = useAppSelector((s) => s.cart);
   const wishlistCount = useAppSelector((s) => s.wishlist.count);
 
-  const [email, setEmail] = useState("");
-  const [subscribing, setSubscribing] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
-
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleNewsletterSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-
-    if (!trimmed) {
-      toast.error("Please enter your email address.");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmed)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-
-    setSubscribing(true);
-    try {
-      const res = await newsletterService.subscribe(trimmed);
-      toast.success(
-        res.data?.message || "Welcome to BDFashions! You're subscribed."
-      );
-      setEmail("");
-      setSubscribed(true);
-    } catch (err) {
-      const axiosErr = err as AxiosError<{ message?: string }>;
-      const msg =
-        axiosErr.response?.data?.message ||
-        "Could not subscribe right now. Please try again.";
-      toast.error(msg);
-    } finally {
-      setSubscribing(false);
-    }
   };
 
   return (
@@ -164,94 +90,8 @@ export default function Footer() {
         className="pointer-events-none absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-dark/10 blur-3xl"
       />
 
-      {/* Top Trust Highlights Bar */}
-      <div className="relative border-b border-dark/10 bg-dark/[0.04]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {trustHighlights.map(({ icon: Icon, title, subtitle, to }) => (
-              <Link
-                key={title}
-                to={to}
-                className="group flex items-center gap-3.5 rounded-2xl p-2.5 transition-all duration-300 hover:bg-white/25"
-              >
-                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-dark text-[#FDA702] shadow-md transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-105">
-                  <Icon size={20} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-dark leading-tight">
-                    {title}
-                  </p>
-                  <p className="text-xs text-dark/75 truncate mt-0.5">
-                    {subtitle}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Content */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12">
-        {/* Newsletter Card */}
-        <div className="mb-12 rounded-2xl border border-white/40 bg-white/25 p-6 sm:p-8 backdrop-blur-md shadow-sm">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="max-w-xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-dark px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#FDA702]">
-                Exclusive Club
-              </span>
-              <h3 className="mt-3 text-xl sm:text-2xl font-extrabold tracking-tight text-dark">
-                Get Early Access to Drops & Exclusive Offers
-              </h3>
-              <p className="mt-1.5 text-sm text-dark/80">
-                Subscribe to our newsletter for new arrivals, seasonal discounts,
-                and curated style updates.
-              </p>
-            </div>
-
-            <form
-              onSubmit={handleNewsletterSubmit}
-              className="w-full lg:w-auto lg:min-w-[400px]"
-              noValidate
-            >
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <div className="relative flex-1">
-                  <FiMail
-                    size={16}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-dark/50"
-                  />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (subscribed) setSubscribed(false);
-                    }}
-                    placeholder="Enter your email address"
-                    aria-label="Email address for newsletter"
-                    className="w-full rounded-xl border border-dark/15 bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-dark placeholder:text-gray-400 shadow-sm outline-none transition focus:border-dark focus:ring-2 focus:ring-dark/15"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={subscribing}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-dark px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-300 hover:bg-[#082c36] hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <FiSend size={15} />
-                  <span>{subscribing ? "Subscribing..." : "Subscribe"}</span>
-                </button>
-              </div>
-              {subscribed && (
-                <p className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-dark">
-                  <FiCheckCircle className="text-emerald-800" size={14} />
-                  Thanks for subscribing! Watch your inbox for our next drop.
-                </p>
-              )}
-            </form>
-          </div>
-        </div>
-
-        {/* Columns Grid */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           {/* Brand Info */}
           <div className="lg:col-span-4">

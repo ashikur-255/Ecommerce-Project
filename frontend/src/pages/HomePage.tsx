@@ -16,6 +16,7 @@ import StarRating from "../components/ui/StarRating";
 import { getImageUrl } from "../utils/image";
 import type { Category } from "../types";
 import Counter from "../components/common/Counter";
+import ExclusiveClubSection from "../components/home/ExclusiveClubSection";
 
 const REVIEWS = [
   {
@@ -670,6 +671,9 @@ useEffect(() => {
           </Link>
         </div>
       </section>
+
+      {/* TRUST HIGHLIGHTS & EXCLUSIVE CLUB NEWSLETTER */}
+      <ExclusiveClubSection />
 
       {/* REVIEWS */}
       <section id="reviews" className="px-6 sm:px-10 lg:px-20 py-12">
