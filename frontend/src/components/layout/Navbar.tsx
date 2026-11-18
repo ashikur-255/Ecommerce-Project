@@ -173,7 +173,6 @@ useEffect(() => {
 
     navigate(`/products?search=${encodeURIComponent(query)}`);
     setSearchQuery("");
-    setSearchOpen(false);
     setMenuOpen(false);
   }, [searchQuery, navigate]);
 
