@@ -26,7 +26,7 @@ if (!string.IsNullOrEmpty(port))
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
 
-// ── Database ──────────────────────────────────────────────────────────────────
+// ── Database (PostgreSQL / Supabase) ─────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -176,7 +176,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Ecommerce API",
         Version = "v1",
-        Description = "ASP.NET Core Web API – Adidas-style E-Commerce (SQL Server)"
+        Description = "ASP.NET Core Web API – E-Commerce System (PostgreSQL)"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
