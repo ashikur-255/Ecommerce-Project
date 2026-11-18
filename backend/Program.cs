@@ -13,6 +13,10 @@ using Stripe;
 using System.Text;
 using System.Text.Json.Serialization;
 
+// ── Npgsql: Fix DateTime vs timestamptz compatibility (MUST be before anything) ──
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Render / PaaS dynamic PORT binding ───────────────────────────────────────
@@ -218,14 +222,16 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────
+// Swagger enabled in all environments for debugging
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce API v1");
+    c.RoutePrefix = "swagger";
+});
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce API v1");
-        c.RoutePrefix = "swagger";
-    });
     app.UseHttpsRedirection();
 }
 
