@@ -17,6 +17,7 @@ import { getImageUrl } from "../utils/image";
 import type { Category } from "../types";
 import Counter from "../components/common/Counter";
 import ExclusiveClubSection from "../components/home/ExclusiveClubSection";
+import FlashSaleBanner from "../components/home/FlashSaleBanner";
 
 const REVIEWS = [
   {
@@ -650,27 +651,7 @@ useEffect(() => {
   </div>
 </section>
       {/* SALE BANNER */}
-      <section className="relative overflow-hidden py-28 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 text-8xl">🔥</div>
-          <div className="absolute bottom-10 right-10 text-8xl">🛍️</div>
-        </div>
-        <div className="relative max-w-7xl mx-auto px-6 text-center">
-          <span className="inline-block px-5 py-2 rounded-full bg-white/20 backdrop-blur-md text-sm font-bold uppercase tracking-widest">
-            Limited Time Offer
-          </span>
-          <h2 className="mt-6 text-5xl md:text-7xl font-black leading-tight">UP TO 50% OFF</h2>
-          <p className="mt-5 text-lg md:text-xl text-red-100 max-w-2xl mx-auto">
-            Discover premium products at unbeatable prices. Grab your favorites before they're gone.
-          </p>
-          <Link
-            to="/products?sale=true"
-            className="inline-flex items-center gap-3 mt-10 px-10 py-4 rounded-2xl bg-white text-red-600 font-bold text-lg shadow-2xl hover:scale-105 hover:-translate-y-1 transition-all duration-300"
-          >
-            🔥 Shop Sale
-          </Link>
-        </div>
-      </section>
+      <FlashSaleBanner />
 
       {/* TRUST HIGHLIGHTS & EXCLUSIVE CLUB NEWSLETTER */}
       <ExclusiveClubSection />
