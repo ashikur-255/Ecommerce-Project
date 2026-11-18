@@ -1,18 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import Swal from "sweetalert2";
-import type { AxiosError } from "axios";
 import { FiShoppingCart } from "react-icons/fi";
 
 import ScrollToTopButton from "../components/ui/ScrollToTopButton";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchNewArrivals, fetchFeatured } from "../store/slices/productSlice";
 import { addToCart } from "../store/slices/cartSlice";
-import { categoryService, newsletterService } from "../services/api";
+import { categoryService } from "../services/api";
 import StarRating from "../components/ui/StarRating";
 import { getImageUrl } from "../utils/image";
 import type { Category } from "../types";
@@ -123,65 +122,6 @@ useEffect(() => {
   fetchCategories();
   return () => { cancelled = true; };
 }, []);
-
-
-
-
-  const emailRef = useRef<HTMLInputElement>(null);
-  const [subscribing, setSubscribing] = useState(false);
-
-  const handleSubscribe = async () => {
-    const email = emailRef.current?.value.trim() ?? "";
-    if (!email) {
-      Swal.fire({
-        icon: "warning",
-        title: "Email required",
-        text: "Please enter your email address.",
-        confirmButtonColor: "#2563eb",
-      });
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Swal.fire({
-        icon: "warning",
-        title: "Invalid email",
-        text: "Please enter a valid email address.",
-        confirmButtonColor: "#2563eb",
-      });
-      return;
-    }
-    setSubscribing(true);
-    try {
-      await newsletterService.subscribe(email);
-      Swal.fire({
-        icon: "success",
-        title: "Subscribed!",
-        text: "Thank you for subscribing to our newsletter.",
-        confirmButtonColor: "#2563eb",
-      });
-      if (emailRef.current) emailRef.current.value = "";
-    } catch (err) {
-      const error = err as AxiosError<{ message: string }>;
-      if (error.response?.status === 409) {
-        Swal.fire({
-          icon: "info",
-          title: "Already subscribed",
-          text: "Email exists",
-          confirmButtonColor: "#2563eb",
-        });
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Something went wrong",
-          text: error.response?.data?.message ?? "Please try again later.",
-          confirmButtonColor: "#2563eb",
-        });
-      }
-    } finally {
-      setSubscribing(false);
-    }
-  };
 
   const handleQuickAddToCart = async (productId: number) => {
     if (!user) {
@@ -728,46 +668,6 @@ useEffect(() => {
           >
             🔥 Shop Sale
           </Link>
-        </div>
-      </section>
-
-      {/* NEWSLETTER */}
-      <section className="bg-primary py-20">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl font-black text-white">Join Our Newsletter</h2>
-          <p className="text-white/90 mt-4">Get updates about new arrivals and exclusive offers.</p>
-          <div className="flex mt-8">
-            <input
-              ref={emailRef}
-              type="email"
-              placeholder="Enter your email"
-              onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
-              className="flex-1 px-5 py-4 rounded-l-xl outline-none"
-            />
-            <button
-              onClick={handleSubscribe}
-              disabled={subscribing}
-              className="
-                bg-black
-                text-white
-                px-8
-                rounded-r-xl
-                font-semibold
-                transition-all
-                duration-300
-                hover:bg-blue-600
-                hover:-translate-y-0.5
-                hover:shadow-lg
-                active:translate-y-0
-                disabled:opacity-60
-                disabled:cursor-not-allowed
-                disabled:hover:translate-y-0
-                disabled:hover:shadow-none
-              "
-            >
-              {subscribing ? "Subscribing..." : "Subscribe"}
-            </button>
-          </div>
         </div>
       </section>
 
