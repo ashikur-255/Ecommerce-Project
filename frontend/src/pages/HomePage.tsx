@@ -21,19 +21,19 @@ import Counter from "../components/common/Counter";
 const REVIEWS = [
   {
     name: "John Smith",
-    avatar: "/src/assets/reviews/John.jpg",
+    avatar: "/reviews/John.jpg",
     rating: 5,
     text: "Amazing quality, premium materials, and super fast delivery. Definitely shopping here again!",
   },
   {
     name: "Sarah Johnson",
-    avatar: "/src/assets/reviews/Sarah.jpg",
+    avatar: "/reviews/Sarah.jpg",
     rating: 5,
     text: "Excellent customer support and a seamless shopping experience. Highly satisfied with my purchase.",
   },
   {
     name: "Michael Brown",
-    avatar: "/src/assets/reviews/Michael.jpg",
+    avatar: "/reviews/Michael.jpg",
     rating: 5,
     text: "Outstanding products and great value for money. I would highly recommend this store to everyone.",
   },
@@ -229,15 +229,18 @@ useEffect(() => {
     <main>
       <ScrollToTopButton />
       {/* HERO */}
-      <section className="relative min-h-screen bg-black text-white overflow-hidden">
+      <section className="relative min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20">
         <div className="absolute inset-0">
           <img
-            src="/src/assets/Logo of BDF.png"
-            alt="Adidas Hero"
+            src="/Logo of BDF.png"
+            alt="BDF Hero"
             className="w-full h-full object-cover opacity-40"
+            onError={(e) => {
+              e.currentTarget.src = "/src/assets/Logo of BDF.png";
+            }}
           />
         </div>
-        <div className="relative max-w-7xl mx-auto px-6 py-32">
+        <div className="relative max-w-7xl mx-auto px-6 py-24 lg:py-32">
           <span className="uppercase tracking-widest text-primary font-bold">
             New Collection 2026
           </span>

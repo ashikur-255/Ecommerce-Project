@@ -18,6 +18,7 @@ import { getImageUrl } from "../../utils/image";
 import type { CartItem } from "../../types";
 // ⬇️ import যোগ করো (উপরে অন্য imports-এর সাথে)
 import { resetWishlist } from "../../store/slices/wishlistSlice";
+import bdfLogo from "../../assets/BDF LOGO.png";
 
 
 export default function Navbar() {
@@ -185,8 +186,8 @@ const handleLogout = useCallback(() => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white shadow-md" : "bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 transition-shadow duration-300 ${
+        scrolled ? "shadow-md" : "shadow-sm"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -194,23 +195,26 @@ const handleLogout = useCallback(() => {
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center gap-2 font-bold text-dark text-lg hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2.5 font-bold text-dark text-lg sm:text-xl hover:opacity-90 transition-opacity flex-shrink-0"
           >
             <img 
-              src="/src/assets/BDF LOGO.png" 
-              alt="FashionBD Logo" 
-              className="h-10 w-auto" // Adjust size as needed
+              src={bdfLogo} 
+              alt="BDFashions Logo" 
+              className="h-10 w-10 object-contain rounded-full"
+              onError={(e) => {
+                e.currentTarget.src = "/BDF LOGO.png";
+              }}
             />
-            <span className="hidden sm:inline">BDFashions</span>
+            <span className="font-extrabold text-dark tracking-tight">BDFashions</span>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
             {navLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
-                className="text-dark font-medium hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full"
+                className="text-gray-800 font-semibold text-[15px] hover:text-primary transition-colors"
               >
                 {l.label}
               </Link>
@@ -218,7 +222,7 @@ const handleLogout = useCallback(() => {
           </nav>
 
           {/* Icons */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-5">
             {/* Search - Desktop */}
             <div className="hidden md:flex items-center relative" ref={searchRef}>
               <form
