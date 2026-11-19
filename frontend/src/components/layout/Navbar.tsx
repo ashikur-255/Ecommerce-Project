@@ -3,12 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { BsCart4 } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaUser } from "react-icons/fa";
-import { 
-  FiSearch, 
-  FiMenu, 
-  FiX, 
+import {
+  FiSearch,
+  FiMenu,
+  FiX,
   FiTrash2,
-  FiHeart 
+  FiHeart
 } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { logout } from "../../store/slices/authSlice";
@@ -30,7 +30,7 @@ export default function Navbar() {
   const wishlistCount = useAppSelector((state) => state.wishlist.count);
   const [cartBump, setCartBump] = useState(false);
   const prevItemCountRef = useRef(itemCount);
-  
+
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -51,15 +51,15 @@ export default function Navbar() {
   }, []);
 
   // Trigger a "bump" animation only when items are ADDED (not removed)
-useEffect(() => {
-  if (itemCount > prevItemCountRef.current) {
-    setCartBump(true);
-    const timer = setTimeout(() => setCartBump(false), 500);
+  useEffect(() => {
+    if (itemCount > prevItemCountRef.current) {
+      setCartBump(true);
+      const timer = setTimeout(() => setCartBump(false), 500);
+      prevItemCountRef.current = itemCount;
+      return () => clearTimeout(timer);
+    }
     prevItemCountRef.current = itemCount;
-    return () => clearTimeout(timer);
-  }
-  prevItemCountRef.current = itemCount;
-}, [itemCount]);
+  }, [itemCount]);
 
   // Fetch cart when user is logged in
   useEffect(() => {
@@ -181,12 +181,12 @@ useEffect(() => {
   }, [searchQuery, navigate]);
 
   // Logout handler — বদলাও
-const handleLogout = useCallback(() => {
-  dispatch(logout());
-  dispatch(resetWishlist()); // ⬅️ নতুন লাইন
-  navigate("/");
-  setUserOpen(false);
-}, [dispatch, navigate]);
+  const handleLogout = useCallback(() => {
+    dispatch(logout());
+    dispatch(resetWishlist()); // ⬅️ নতুন লাইন
+    navigate("/");
+    setUserOpen(false);
+  }, [dispatch, navigate]);
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -197,27 +197,26 @@ const handleLogout = useCallback(() => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 transition-shadow duration-300 ${
-        scrolled ? "shadow-md" : "shadow-sm"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 transition-shadow duration-300 ${scrolled ? "shadow-md" : "shadow-sm"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20 gap-1.5 sm:gap-4">
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             onClick={handleHomeClick}
             className="group flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105"
             aria-label="BDFashions Home"
           >
             <div className="relative flex items-center justify-center">
-              <div 
-                aria-hidden="true" 
-                className="pointer-events-none absolute inset-0 rounded-full bg-[#FDA702]/25 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100" 
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-full bg-[#FDA702]/25 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100"
               />
-              <img 
-                src={bdfLogo} 
-                alt="BDFashions Logo" 
+              <img
+                src={bdfLogo}
+                alt="BDFashions Logo"
                 className="relative h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 object-contain rounded-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
                 onError={(e) => {
                   e.currentTarget.src = "/bdf-logo.png";
@@ -285,44 +284,43 @@ const handleLogout = useCallback(() => {
             {/* Cart */}
             <div className="relative" ref={cartRef}>
               <motion.button
-  onClick={() => { setCartOpen((p) => !p); setUserOpen(false); }}
-  aria-label="Cart"
-  animate={cartBump ? { scale: [1, 1.3, 0.95, 1.1, 1] } : { scale: 1 }}
-  transition={{ duration: 0.5, ease: "easeInOut" }}
-  className={`relative flex items-center justify-center text-xl transition-colors duration-300 ${
-    itemCount > 0 ? "text-primary" : "text-dark hover:text-primary"
-  }`}
->
-  {/* Soft glow ring — flashes once when an item is added */}
-  <AnimatePresence>
-    {cartBump && (
-      <motion.span
-        initial={{ scale: 0.5, opacity: 0.6 }}
-        animate={{ scale: 2.2, opacity: 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="absolute inset-0 rounded-full bg-primary/40"
-      />
-    )}
-  </AnimatePresence>
+                onClick={() => { setCartOpen((p) => !p); setUserOpen(false); }}
+                aria-label="Cart"
+                animate={cartBump ? { scale: [1, 1.3, 0.95, 1.1, 1] } : { scale: 1 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className={`relative flex items-center justify-center text-xl transition-colors duration-300 ${itemCount > 0 ? "text-primary" : "text-dark hover:text-primary"
+                  }`}
+              >
+                {/* Soft glow ring — flashes once when an item is added */}
+                <AnimatePresence>
+                  {cartBump && (
+                    <motion.span
+                      initial={{ scale: 0.5, opacity: 0.6 }}
+                      animate={{ scale: 2.2, opacity: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="absolute inset-0 rounded-full bg-primary/40"
+                    />
+                  )}
+                </AnimatePresence>
 
-  <BsCart4 />
+                <BsCart4 />
 
-  <AnimatePresence>
-    {itemCount > 0 && (
-      <motion.span
-        key={itemCount}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 500, damping: 15 }}
-        className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg"
-      >
-        {itemCount > 99 ? "99+" : itemCount}
-      </motion.span>
-    )}
-  </AnimatePresence>
-</motion.button>
+                <AnimatePresence>
+                  {itemCount > 0 && (
+                    <motion.span
+                      key={itemCount}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg"
+                    >
+                      {itemCount > 99 ? "99+" : itemCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
 
               {cartOpen && (
                 <div className="absolute right-0 top-10 w-80 sm:w-96 bg-white shadow-2xl rounded-xl p-4 z-50 max-h-[80vh] flex flex-col">
@@ -354,8 +352,8 @@ const handleLogout = useCallback(() => {
                     <>
                       <div className="space-y-3 overflow-y-auto flex-1 pr-1">
                         {items.map((item) => (
-                          <div 
-                            key={`${item.productId}-${item.size}-${item.color}`} 
+                          <div
+                            key={`${item.productId}-${item.size}-${item.color}`}
                             className="flex gap-3 items-center bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors"
                           >
                             <img
@@ -446,61 +444,61 @@ const handleLogout = useCallback(() => {
                   {user ? (
                     <>
                       <div className="flex items-center gap-3 mb-3">
-  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex-shrink-0">
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex-shrink-0">
 
-    {avatarUrl ? (
-      <img
-        src={avatarUrl}
-        alt={user.name}
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-        }}
-      />
-    ) : (
-      <div className="w-full h-full bg-primary text-white flex items-center justify-center font-semibold">
-        {user.name.charAt(0).toUpperCase()}
-      </div>
-    )}
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-primary text-white flex items-center justify-center font-semibold">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
 
-  </div>
+                        </div>
 
-  <div className="flex-1 min-w-0">
-    <p className="font-semibold text-dark text-sm truncate">
-      {user.name}
-    </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-dark text-sm truncate">
+                            {user.name}
+                          </p>
 
-    <p className="text-xs text-gray-500 truncate">
-      {user.email}
-    </p>
-  </div>
-</div>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
                       <hr className="mb-3" />
                       <div className="flex flex-col gap-1">
-                        <Link 
-                          to="/profile" 
+                        <Link
+                          to="/profile"
                           onClick={() => setUserOpen(false)}
                           className="text-sm text-dark hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
                         >
                           My Profile
                         </Link>
-                        <Link 
-                          to="/orders" 
+                        <Link
+                          to="/orders"
                           onClick={() => setUserOpen(false)}
                           className="text-sm text-dark hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
                         >
                           My Orders
                         </Link>
-                        <Link 
-                          to="/wishlist" 
+                        <Link
+                          to="/wishlist"
                           onClick={() => setUserOpen(false)}
                           className="text-sm text-dark hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
                         >
                           Wishlist
                         </Link>
                         {user.role === "admin" && (
-                          <Link 
-                            to="/admin" 
+                          <Link
+                            to="/admin"
                             onClick={() => setUserOpen(false)}
                             className="text-sm text-primary font-medium px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors"
                           >
@@ -508,7 +506,7 @@ const handleLogout = useCallback(() => {
                           </Link>
                         )}
                         <hr className="my-1" />
-                        <button 
+                        <button
                           onClick={handleLogout}
                           className="text-sm text-center text-red-500 hover:text-red-700 transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
                         >
@@ -519,15 +517,15 @@ const handleLogout = useCallback(() => {
                   ) : (
                     <>
                       <p className="text-sm text-dark font-semibold mb-3">Welcome!</p>
-                      <Link 
-                        to="/login" 
+                      <Link
+                        to="/login"
                         onClick={() => setUserOpen(false)}
                         className="block w-full text-center bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-dark transition-colors mb-2"
                       >
                         Login
                       </Link>
-                      <Link 
-                        to="/register" 
+                      <Link
+                        to="/register"
                         onClick={() => setUserOpen(false)}
                         className="block w-full text-center border border-dark text-dark py-2 rounded-lg text-sm font-medium hover:bg-dark hover:text-white transition-colors"
                       >
@@ -540,8 +538,8 @@ const handleLogout = useCallback(() => {
             </div>
 
             {/* Mobile Menu Toggle */}
-            <button 
-              onClick={() => setMenuOpen((p) => !p)} 
+            <button
+              onClick={() => setMenuOpen((p) => !p)}
               className="lg:hidden text-dark text-xl hover:text-primary transition-colors"
               aria-label="Toggle menu"
             >
