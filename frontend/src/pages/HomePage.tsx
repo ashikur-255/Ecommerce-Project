@@ -5,7 +5,15 @@ import { Autoplay, Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import Swal from "sweetalert2";
-import { FiShoppingCart } from "react-icons/fi";
+import { 
+  FiShoppingCart, 
+  FiArrowRight, 
+  FiShoppingBag, 
+  FiTruck, 
+  FiShield, 
+  FiRefreshCw 
+} from "react-icons/fi";
+import { HiSparkles } from "react-icons/hi";
 
 import ScrollToTopButton from "../components/ui/ScrollToTopButton";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
@@ -178,7 +186,7 @@ useEffect(() => {
           <img
             src={heroMobile}
             alt="BDF Hero Mobile"
-            className="w-full h-full object-cover object-center opacity-45 md:hidden"
+            className="w-full h-full object-cover object-center opacity-70 md:hidden"
             onError={(e) => {
               e.currentTarget.src = "/hero-mobile.png";
             }}
@@ -187,40 +195,92 @@ useEffect(() => {
           <img
             src="/Logo of BDF.png"
             alt="BDF Hero Desktop"
-            className="hidden md:block w-full h-full object-cover object-center opacity-40"
+            className="hidden md:block w-full h-full object-cover object-center opacity-60"
             onError={(e) => {
               e.currentTarget.src = "/src/assets/Logo of BDF.png";
             }}
           />
-          {/* Mobile dark gradient overlay for optimal text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 md:hidden" />
+          {/* Mobile dark gradient overlay: subtle at top, rich at bottom for pristine contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/15 md:hidden" />
+          {/* Desktop cinematic horizontal gradient */}
+          <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
         </div>
+
         <div className="relative w-full max-w-7xl mx-auto px-6 py-16 sm:py-24 lg:py-32">
-          <span className="uppercase tracking-widest text-primary font-bold text-xs sm:text-sm">
-            New Collection 2026
-          </span>
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mt-3 sm:mt-4 leading-tight tracking-tight">
-            IMPOSSIBLE
-            <br />
-            IS NOTHING
+          {/* Premium Capsule Tag */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-amber-300">
+              Exclusive 2026 Collection
+            </span>
+          </div>
+
+          {/* Luxury Bold Headline */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mt-4 leading-[1.06] tracking-tight text-white drop-shadow-md">
+            IMPOSSIBLE <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-primary">
+              IS NOTHING
+            </span>
           </h1>
-          <p className="max-w-xl text-gray-200 sm:text-gray-300 mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed">
-            Discover premium Adidas footwear, apparel and accessories designed for
-            athletes and everyday champions.
+
+          {/* Inspiring Subtitle */}
+          <p className="max-w-xl text-gray-200 sm:text-gray-300 mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed font-normal">
+            Discover iconic styles, luxury footwear, and timeless apparel curated by{" "}
+            <span className="text-white font-semibold underline decoration-primary decoration-2 underline-offset-4">
+              BDFashions
+            </span>{" "}
+            for trendsetters and everyday champions.
           </p>
-          <div className="flex flex-row items-center gap-3 sm:gap-4 mt-6 sm:mt-8">
+
+          {/* Ultra Modern Action Buttons */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3.5 sm:gap-5 mt-7 sm:mt-9">
+            {/* Primary Action Button */}
             <Link
               to="/products"
-              className="bg-white text-black px-6 sm:px-8 py-3.5 sm:py-4 font-bold uppercase text-xs sm:text-sm tracking-wider hover:bg-gray-100 transition whitespace-nowrap text-center"
+              className="group relative inline-flex items-center justify-center gap-2.5 sm:gap-3 bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-dark font-extrabold px-7 sm:px-9 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
             >
-              Shop Now
+              <FiShoppingBag className="text-base text-dark transition-transform duration-300 group-hover:scale-110" />
+              <span>Shop Collection</span>
+              <FiArrowRight className="text-base text-dark transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
+
+            {/* Secondary Action Button */}
             <Link
-              to="/#new"
-              className="border border-white/80 text-white px-6 sm:px-8 py-3.5 sm:py-4 font-bold uppercase text-xs sm:text-sm tracking-wider hover:bg-white/10 transition whitespace-nowrap text-center"
+              to="/products?new=true"
+              onClick={(e) => {
+                const el = document.getElementById("new");
+                if (el && window.location.pathname === "/") {
+                  e.preventDefault();
+                  el.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              className="group inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 hover:border-white text-white font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
             >
-              New Arrivals
+              <HiSparkles className="text-amber-300 text-base transition-transform duration-300 group-hover:rotate-12" />
+              <span>New Arrivals</span>
             </Link>
+          </div>
+
+          {/* Trust Highlights / Quality Badges */}
+          <div className="pt-8 sm:pt-10 flex flex-wrap items-center gap-y-3 gap-x-6 text-xs sm:text-sm text-gray-300 font-medium">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
+                <FiTruck className="text-xs sm:text-sm" />
+              </div>
+              <span>Free Express Delivery</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
+                <FiShield className="text-xs sm:text-sm" />
+              </div>
+              <span>100% Authentic Quality</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
+                <FiRefreshCw className="text-xs sm:text-sm" />
+              </div>
+              <span>Easy 7-Day Exchange</span>
+            </div>
           </div>
         </div>
       </section>
@@ -332,13 +392,13 @@ useEffect(() => {
                     className="w-full aspect-square object-cover"
                     onError={(e) => handleImageError(e, product.category, product.name)}
                   />
-                  <div className="absolute top-full right-0 w-full h-full flex items-center justify-center bg-white/50 group-hover:top-0 transition-all">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
                     <Link
                       to={`/products/${product.id}`}
-                      style={btnClip}
-                      className="bg-primary text-white uppercase px-6 py-2 transition-all duration-300 hover:bg-green-600 hover:text-white hover:scale-105 hover:shadow-lg"
+                      className="inline-flex items-center gap-2 bg-white hover:bg-primary text-dark font-extrabold uppercase px-6 py-2.5 rounded-full text-xs tracking-wider transition-all duration-300 hover:scale-105 shadow-xl"
                     >
-                      Buy Now
+                      <span>Quick View</span>
+                      <FiArrowRight />
                     </Link>
                   </div>
                 </div>
@@ -620,22 +680,26 @@ useEffect(() => {
       <Link
         to="/products"
         className="
-          inline-flex items-center justify-center
-          px-7 sm:px-9
-          py-3 sm:py-3.5
-          rounded-xl
-          bg-primary
+          group
+          inline-flex items-center justify-center gap-3
+          px-8 sm:px-10
+          py-3.5 sm:py-4
+          rounded-full
+          bg-dark
           text-white
           text-sm sm:text-base
           font-bold
-          shadow-md
-          hover:shadow-lg
+          shadow-xl
+          hover:bg-primary
+          hover:text-dark
+          hover:shadow-2xl
+          hover:shadow-primary/30
           hover:-translate-y-0.5
-          hover:opacity-95
           transition-all duration-300
         "
       >
-        View All Products
+        <span>Explore Full Catalog</span>
+        <FiArrowRight className="text-base transition-transform duration-300 group-hover:translate-x-1" />
       </Link>
     </div>
 
