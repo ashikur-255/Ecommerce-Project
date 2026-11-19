@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import type { AxiosError } from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { getImageUrl, handleImageError } from "../utils/image";
+import { getImageUrl, getProductImageUrl, handleImageError } from "../utils/image";
 import WishlistButton from "../components/common/WishlistButton";
 import { productService } from "../services/api";
 import ProductCard from "../components/product/ProductCard"; // path তোমার structure অনুযায়ী ঠিক করো
@@ -257,11 +257,11 @@ useEffect(() => {
           <div>
             <div className="aspect-square rounded-2xl overflow-hidden bg-light mb-4">
               <img
-                src={getImageUrl(product.images?.[selectedImage])}
+                src={getProductImageUrl(product.images?.[selectedImage], product.category, product.name, selectedImage)}
                 alt={product.name}
                 className="w-full h-full object-cover"
                 loading="lazy"
-                onError={(e) => handleImageError(e, product.category, product.name)}
+                onError={(e) => handleImageError(e, product.category, product.name, selectedImage)}
               />
             </div>
             {product.images.length > 1 && (
@@ -272,11 +272,11 @@ useEffect(() => {
                       i === selectedImage ? "border-primary" : "border-transparent"
                     }`}>
                     <img
-                      src={getImageUrl(img)}
-                      alt={product.name}
+                      src={getProductImageUrl(img, product.category, product.name, i)}
+                      alt={`${product.name} view ${i + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={(e) => handleImageError(e, product.category, product.name)}
+                      onError={(e) => handleImageError(e, product.category, product.name, i)}
                     />
                   </button>
                 ))}

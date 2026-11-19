@@ -11,46 +11,147 @@ const rawApiUrl = (
 const SERVER_URL = rawApiUrl.replace(/\/api$/, "");
 
 /**
- * Fallback product image based on category or product name
+ * Fallback product image based on category or product name with index-aware variation.
+ * Guarantees that multiple images for the same product or across products show distinct photos.
  */
-export const getFallbackProductImage = (category?: string, name?: string): string => {
+export const getFallbackProductImage = (
+  category?: string,
+  name?: string,
+  index: number = 0
+): string => {
   const text = `${category || ""} ${name || ""}`.toLowerCase();
-  if (text.includes("hoodie")) return "/products/Hoodie.png";
-  if (text.includes("jacket")) return "/products/Jacket.jpg";
-  if (text.includes("pant") || text.includes("trouser")) return "/products/Pant.jpg";
-  if (text.includes("short")) return "/products/shorts.jpg";
-  if (text.includes("cap") || text.includes("hat")) return "/products/cap.png";
-  if (text.includes("shoe") || text.includes("sneaker")) return "/products/shoes.jpg";
-  if (text.includes("bag")) return "/products/Bag.jpg";
-  if (text.includes("shirt") || text.includes("tee")) return "/products/tshart1.png";
-  if (text.includes("glove")) return "/products/Gloves.jpg";
+  const safeIndex = Math.abs(index || 0);
+
+  if (text.includes("sport") || text.includes("jersey")) {
+    const list = [
+      "/products/jersey1.png",
+      "/products/jersey2.png",
+      "/products/jersey4.png",
+      "/products/jersey5.png",
+      "/products/Jersey6.png",
+      "/products/shorts.jpg",
+      "/products/jersey.jpg",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("pant") || text.includes("trouser") || text.includes("bottom")) {
+    const list = [
+      "/products/Pant.jpg",
+      "/products/pant.png",
+      "/products/pant1.png",
+      "/products/pnt2.png",
+      "/products/pant3.png",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("hoodie")) {
+    const list = [
+      "/products/Hoodie.png",
+      "/products/winter.png",
+      "/products/winter1.png",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("jacket")) {
+    const list = [
+      "/products/Jacket.jpg",
+      "/products/winter2.png",
+      "/products/winter3.png",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("short")) {
+    return "/products/shorts.jpg";
+  }
+
+  if (text.includes("cap") || text.includes("hat")) {
+    const list = [
+      "/products/cap.png",
+      "/products/cap1.jpg",
+      "/products/Cap2.jpg",
+      "/products/cap3.jpg",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("shoe") || text.includes("sneaker") || text.includes("footwear")) {
+    const list = [
+      "/products/shoes.jpg",
+      "/products/shoes1.jpg",
+      "/products/shoes2.png",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("bag")) {
+    const list = ["/products/Bag.jpg", "/products/Bag1.png"];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("shirt") || text.includes("tee") || text.includes("polo")) {
+    const list = [
+      "/products/tshart1.png",
+      "/products/tShart2.png",
+      "/products/tShart3.png",
+      "/products/TShart.png",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("glove")) {
+    const list = ["/products/Gloves.jpg", "/products/Gloves1.png"];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("winter")) {
+    const list = [
+      "/products/winter.png",
+      "/products/winter1.png",
+      "/products/winter2.png",
+      "/products/winter3.png",
+    ];
+    return list[safeIndex % list.length];
+  }
+
+  if (text.includes("long")) {
+    const list = ["/products/long.png", "/products/long1.png", "/products/long2.png"];
+    return list[safeIndex % list.length];
+  }
+
   return "/placeholder.jpg";
 };
 
 /**
- * Fallback category image based on category name
+ * Fallback category image based on category name.
+ * Specifically maps Pants/Trousers to /categories/Pants.jpg so it never displays a t-shirt!
  */
 export const getFallbackCategoryImage = (name?: string): string => {
   const text = (name || "").toLowerCase();
-  if (text.includes("access")) return "/categories/Accessories.jpg";
+  if (text.includes("pant") || text.includes("trouser") || text.includes("bottom")) return "/categories/Pants.jpg";
+  if (text.includes("sport") || text.includes("jersey")) return "/categories/Sports.png";
+  if (text.includes("access") || text.includes("cap") || text.includes("bag")) return "/categories/Accessories.jpg";
   if (text.includes("hood")) return "/categories/Hoodies.jpg";
   if (text.includes("jack")) return "/categories/Jackets.jpg";
-  if (text.includes("shoe")) return "/categories/Shoes.jpg";
-  if (text.includes("sport")) return "/categories/Sports.png";
-  if (text.includes("shirt") || text.includes("tee")) return "/categories/T-Shirts.jpg";
-  if (text.includes("cloth")) return "/categories/Cloth.jpg";
-  return "/placeholder.jpg";
+  if (text.includes("shoe") || text.includes("sneaker")) return "/categories/Shoes.jpg";
+  if (text.includes("shirt") || text.includes("tee") || text.includes("polo")) return "/categories/T-Shirts.jpg";
+  if (text.includes("cloth") || text.includes("apparel")) return "/categories/Cloth.jpg";
+  return "/categories/Cloth.jpg";
 };
 
 /**
  * Robust image error handler for product images:
- * 1. If backend /uploads/... 404s, tries the local frontend /uploads/... static asset
- * 2. If that fails or not applicable, falls back to matching category/name product image
+ * 1. If failed on remote /uploads/..., tries the local frontend static /uploads/...
+ * 2. If that fails or not applicable, falls back to matching category/name product image with index awareness
  */
 export const handleImageError = (
   e: React.SyntheticEvent<HTMLImageElement, Event>,
   category?: string,
-  name?: string
+  name?: string,
+  index: number = 0
 ) => {
   const target = e.currentTarget;
   const currentSrc = target.src || "";
@@ -63,9 +164,9 @@ export const handleImageError = (
     return;
   }
 
-  // 2. Fall back to smart category/name image or placeholder
+  // 2. Fall back to smart category/name image with index distinction
   target.onerror = null;
-  target.src = getFallbackProductImage(category, name);
+  target.src = getFallbackProductImage(category, name, index);
 };
 
 /**
@@ -133,16 +234,27 @@ export const getImageUrl = (path?: string | null): string => {
 };
 
 /**
- * Get the full URL for a category image
+ * Get the full URL for a category image with smart category fallback
  */
-export const getCategoryImageUrl = (path?: string | null): string => {
+export const getCategoryImageUrl = (path?: string | null, categoryName?: string): string => {
+  if (!path || !path.trim()) {
+    return getFallbackCategoryImage(categoryName);
+  }
   return getImageUrl(path);
 };
 
 /**
- * Get the full URL for a product image
+ * Get the full URL for a product image with category fallback and index awareness
  */
-export const getProductImageUrl = (path?: string | null): string => {
+export const getProductImageUrl = (
+  path?: string | null,
+  category?: string,
+  name?: string,
+  index: number = 0
+): string => {
+  if (!path || !path.trim()) {
+    return getFallbackProductImage(category, name, index);
+  }
   return getImageUrl(path);
 };
 

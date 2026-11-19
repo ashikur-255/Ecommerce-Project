@@ -10,7 +10,7 @@ import {
 } from "../store/slices/wishlistSlice";
 import { addToCart } from "../store/slices/cartSlice";
 import Button from "../components/ui/Button";
-import { getImageUrl, handleImageError } from "../utils/image";
+import { getImageUrl, getProductImageUrl, handleImageError } from "../utils/image";
 
 export default function WishlistPage() {
   const dispatch = useAppDispatch();
@@ -80,7 +80,7 @@ const handleAddToCart = (productId: number) => {
               >
                 <Link to={`/products/${item.productId}`} className="block aspect-square bg-light overflow-hidden">
                   <img
-                    src={getImageUrl(item.image)}
+                    src={getProductImageUrl(item.image, undefined, item.productName)}
                     alt={item.productName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => handleImageError(e, undefined, item.productName)}

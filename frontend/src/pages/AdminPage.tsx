@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchProducts } from "../store/slices/productSlice";
 import Button from "../components/ui/Button";
-import { getImageUrl, handleImageError } from "../utils/image";
+import { getImageUrl, getProductImageUrl, handleImageError } from "../utils/image";
 import CategoryManager from "../components/Categorymanager";
 import PaymentsManager from "../components/PaymentsManager";
 import Pagination from "../components/common/Pagination";
@@ -29,6 +29,7 @@ const EMPTY_FORM = {
   category: "",
   brand: "",
   imageFiles: [] as File[],
+  existingImages: [] as string[],
   imageUrls: "",
   sizes: "",
   colors: "",
@@ -200,7 +201,8 @@ useEffect(() => {
       category: p.category,
       brand: p.brand,
       imageFiles: [],
-      imageUrls: (p.images || []).join("\n"),
+      existingImages: p.images || [],
+      imageUrls: "",
       sizes: p.sizes.join("|"),
       colors: p.colors.join("|"),
       tags: p.tags.join("|"),
@@ -210,6 +212,27 @@ useEffect(() => {
     });
     setEditingId(p.id);
     setShowForm(true);
+  };
+
+  const removeExistingImage = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      existingImages: prev.existingImages.filter((_, i) => i !== index),
+    }));
+  };
+
+  const clearAllExistingImages = () => {
+    setForm((prev) => ({
+      ...prev,
+      existingImages: [],
+    }));
+  };
+
+  const removeImage = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      imageFiles: prev.imageFiles.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,6 +250,9 @@ useEffect(() => {
       .map((u) => u.trim())
       .filter((u) => u.length > 0);
 
+    // Combine preserved existing images + newly provided URLs
+    const finalImageUrls = [...form.existingImages, ...parsedImageUrls];
+
     const payload = {
       name: form.name.trim(),
       description: form.description.trim(),
@@ -235,7 +261,7 @@ useEffect(() => {
       category: form.category.trim(),
       brand: form.brand.trim() || "adidas",
       imageFiles: form.imageFiles,
-      imageUrls: parsedImageUrls,
+      imageUrls: finalImageUrls,
       sizes: form.sizes.split("|").map((s) => s.trim()).filter(Boolean),
       colors: form.colors.split("|").map((s) => s.trim()).filter(Boolean),
       tags: form.tags.split("|").map((s) => s.trim()).filter(Boolean),
@@ -260,13 +286,6 @@ useEffect(() => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const removeImage = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      imageFiles: prev.imageFiles.filter((_, i) => i !== index)
-    }));
   };
 
   const handleDeleteProduct = async (id: number) => {
@@ -464,7 +483,7 @@ useEffect(() => {
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-3">
                               <img
-                                src={getImageUrl(p.images?.[0])}
+                                src={getProductImageUrl(p.images?.[0], p.category, p.name)}
                                 alt={p.name}
                                 className="w-12 h-12 rounded-lg object-cover bg-gray-100"
                                 onError={(e) => handleImageError(e, p.category, p.name)}
@@ -985,10 +1004,108 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="col-span-2 space-y-3">
+                <div className="col-span-2 space-y-4">
+                  {/* Existing images list (when editing a product) */}
+                  {form.existingImages.length > 0 && (
+                    <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-700">
+                          Current Product Images ({form.existingImages.length})
+                        </label>
+                        <button
+                          type="button"
+                          onClick={clearAllExistingImages}
+                          className="text-xs text-red-500 hover:text-red-700 font-semibold underline"
+                        >
+                          Clear All Existing
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        {form.existingImages.map((imgUrl, idx) => (
+                          <div key={idx} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-gray-300 bg-white shadow-xs">
+                            <img
+                              src={getImageUrl(imgUrl)}
+                              alt={`Existing image ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => handleImageError(e, form.category, form.name, idx)}
+                            />
+                            <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[9px] text-center py-0.5 truncate px-1">
+                              {idx === 0 ? "★ Primary" : `#${idx + 1}`}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeExistingImage(idx)}
+                              title="Delete this image"
+                              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md transition transform hover:scale-110"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-2">
+                        Click × to remove an old image. Uploading new images below will add them to this product.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Upload new images from device */}
                   <div>
                     <label className="block text-sm font-medium text-dark mb-1">
-                      Image URLs (Direct link e.g. Unsplash, Imgur, or Cloudinary)
+                      Upload Images from Device (Multiple Allowed)
+                    </label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 0) {
+                          setForm((prev) => ({
+                            ...prev,
+                            imageFiles: [...prev.imageFiles, ...files],
+                          }));
+                        }
+                      }}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:opacity-90"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Hold Ctrl/Cmd to select multiple images. Each uploaded image is uniquely stored.
+                    </p>
+
+                    {form.imageFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-3 mt-3 p-3 bg-blue-50/60 rounded-xl border border-blue-100">
+                        <p className="w-full text-xs font-semibold text-blue-700 mb-1">
+                          New files selected to upload ({form.imageFiles.length}):
+                        </p>
+                        {form.imageFiles.map((file, index) => (
+                          <div key={index} className="relative group w-20 h-20 rounded-lg overflow-hidden border-2 border-primary bg-white shadow-sm">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`New file ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-0 left-0 right-0 bg-primary/90 text-white text-[9px] text-center py-0.5 truncate px-1">
+                              New #{index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              title="Remove file"
+                              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md transition transform hover:scale-110"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* External direct image URLs */}
+                  <div>
+                    <label className="block text-sm font-medium text-dark mb-1">
+                      Or Direct Image URLs (Permanent CDN e.g. Unsplash, Cloudinary, ImgBB)
                     </label>
                     <textarea
                       rows={2}
@@ -998,51 +1115,9 @@ useEffect(() => {
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
                     />
                     <p className="text-xs text-gray-400 mt-1">
-                      Recommended: Direct URLs are permanent and load instantly across all devices.
+                      Direct URLs are permanent and load instantly across all devices without depending on server disk.
                     </p>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-dark mb-1">
-                      Or Upload Images from Device
-                    </label>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          imageFiles: Array.from(e.target.files || []),
-                        }))
-                      }
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Hold Ctrl/Cmd to select multiple images.
-                    </p>
-                  </div>
-
-                  {form.imageFiles.length > 0 && (
-                    <div className="flex flex-wrap gap-3 mt-2">
-                      {form.imageFiles.map((file, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 group-hover:border-primary transition"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition shadow-md hover:scale-110"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 <div>

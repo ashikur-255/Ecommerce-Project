@@ -21,7 +21,13 @@ import { fetchNewArrivals, fetchFeatured } from "../store/slices/productSlice";
 import { addToCart } from "../store/slices/cartSlice";
 import { categoryService } from "../services/api";
 import StarRating from "../components/ui/StarRating";
-import { getImageUrl, handleImageError, handleCategoryImageError } from "../utils/image";
+import {
+  getImageUrl,
+  getProductImageUrl,
+  getCategoryImageUrl,
+  handleImageError,
+  handleCategoryImageError,
+} from "../utils/image";
 import type { Category } from "../types";
 import StatsSection from "../components/home/StatsSection";
 import ExclusiveClubSection from "../components/home/ExclusiveClubSection";
@@ -332,7 +338,7 @@ useEffect(() => {
                     className="relative block overflow-hidden rounded-3xl group shadow-lg"
                   >
                     <img
-                      src={getImageUrl(category.image)}
+                      src={getCategoryImageUrl(category.image, category.name)}
                       alt={category.name}
                       className="h-[450px] w-full object-cover transition duration-700 group-hover:scale-110 bg-light"
                       onError={(e) => handleCategoryImageError(e, category.name)}
@@ -387,7 +393,7 @@ useEffect(() => {
               <SwiperSlide key={product.id}>
                 <div className="relative overflow-hidden bg-light group">
                   <img
-                    src={getImageUrl(product.images?.[0])}
+                    src={getProductImageUrl(product.images?.[0], product.category, product.name)}
                     alt={product.name}
                     className="w-full aspect-square object-cover"
                     onError={(e) => handleImageError(e, product.category, product.name)}
@@ -497,7 +503,7 @@ useEffect(() => {
 
             {/* Product Image */}
             <img
-              src={getImageUrl(product.images?.[0] ?? "")}
+              src={getProductImageUrl(product.images?.[0], product.category, product.name)}
               alt={product.name}
               loading="lazy"
               className="

@@ -4,7 +4,7 @@ import { FiTrash2, FiShoppingBag } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchCart, updateCartItem, removeFromCart, clearCart } from "../store/slices/cartSlice";
 import Button from "../components/ui/Button";
-import { getImageUrl, handleImageError } from "../utils/image";
+import { getImageUrl, getProductImageUrl, handleImageError } from "../utils/image";
 
 export default function CartPage() {
   const dispatch = useAppDispatch();
@@ -74,7 +74,7 @@ export default function CartPage() {
               <div key={`${item.productId}-${item.size}-${item.color}`}
                 className="bg-white rounded-2xl border border-gray-100 p-5 flex gap-4 items-center">
                 <img
-                  src={getImageUrl(item.product.images?.[0])}
+                  src={getProductImageUrl(item.product.images?.[0], item.product.category, item.product.name)}
                   alt={item.product.name}
                   className="w-24 h-24 object-cover rounded-xl bg-gray-100 shrink-0"
                   onError={(e) => handleImageError(e, item.product.category, item.product.name)}

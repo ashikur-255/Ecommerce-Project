@@ -187,16 +187,16 @@ public class ProductsController : ControllerBase
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage))));
 
-        // ✅ Check ImageUrls and Images properties
+        // ✅ Check Images and ImageUrls properties (files first)
         var imageUrls = new List<string>();
-        if (dto.ImageUrls != null && dto.ImageUrls.Any())
-        {
-            imageUrls.AddRange(dto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)));
-        }
         if (dto.Images != null && dto.Images.Any())
         {
             var saved = await SaveImages(dto.Images);
             imageUrls.AddRange(saved);
+        }
+        if (dto.ImageUrls != null && dto.ImageUrls.Any())
+        {
+            imageUrls.AddRange(dto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)));
         }
 
         var product = new Product
@@ -250,16 +250,16 @@ public class ProductsController : ControllerBase
         product.Category = dto.Category.Trim();
         product.Brand = dto.Brand.Trim();
 
-        // ✅ FIX: Save new images or URLs if provided
+        // ✅ Prioritize newly uploaded images first, followed by preserved existing URLs
         var imageUrls = new List<string>();
-        if (dto.ImageUrls != null && dto.ImageUrls.Any())
-        {
-            imageUrls.AddRange(dto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)));
-        }
         if (dto.Images != null && dto.Images.Any())
         {
             var saved = await SaveImages(dto.Images);
             imageUrls.AddRange(saved);
+        }
+        if (dto.ImageUrls != null && dto.ImageUrls.Any())
+        {
+            imageUrls.AddRange(dto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)));
         }
         if (imageUrls.Any())
         {
@@ -348,7 +348,7 @@ public class ProductsController : ControllerBase
             return urls;
 
         var uploadPath = Path.Combine(
-            _env.WebRootPath,
+            _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
             "uploads",
             "products"
         );
