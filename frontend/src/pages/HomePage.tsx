@@ -171,35 +171,43 @@ useEffect(() => {
     <main>
       <ScrollToTopButton />
       {/* HERO */}
-      <section id="hero" className="relative min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20">
+      <section id="hero" className="relative min-h-[100dvh] md:min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20 flex items-center">
         <div className="absolute inset-0">
           <img
             src="/Logo of BDF.png"
             alt="BDF Hero"
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover object-[68%_center] md:object-center opacity-50 md:opacity-40"
             onError={(e) => {
               e.currentTarget.src = "/src/assets/Logo of BDF.png";
             }}
           />
+          {/* Subtle mobile dark gradient for crystal clear text readability without affecting desktop */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 md:hidden" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-6 py-24 lg:py-32">
-          <span className="uppercase tracking-widest text-primary font-bold">
+        <div className="relative w-full max-w-7xl mx-auto px-6 py-16 sm:py-24 lg:py-32">
+          <span className="uppercase tracking-widest text-primary font-bold text-xs sm:text-sm">
             New Collection 2026
           </span>
-          <h1 className="text-5xl md:text-7xl font-black mt-4 leading-tight">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mt-3 sm:mt-4 leading-tight tracking-tight">
             IMPOSSIBLE
             <br />
             IS NOTHING
           </h1>
-          <p className="max-w-xl text-gray-300 mt-6 text-lg">
+          <p className="max-w-xl text-gray-200 sm:text-gray-300 mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed">
             Discover premium Adidas footwear, apparel and accessories designed for
             athletes and everyday champions.
           </p>
-          <div className="flex gap-4 mt-8">
-            <Link to="/products" className="bg-white text-black px-8 py-4 font-bold uppercase">
+          <div className="flex flex-row items-center gap-3 sm:gap-4 mt-6 sm:mt-8">
+            <Link
+              to="/products"
+              className="bg-white text-black px-6 sm:px-8 py-3.5 sm:py-4 font-bold uppercase text-xs sm:text-sm tracking-wider hover:bg-gray-100 transition whitespace-nowrap text-center"
+            >
               Shop Now
             </Link>
-            <Link to="/#new" className="border border-white px-8 py-4 font-bold uppercase">
+            <Link
+              to="/#new"
+              className="border border-white/80 text-white px-6 sm:px-8 py-3.5 sm:py-4 font-bold uppercase text-xs sm:text-sm tracking-wider hover:bg-white/10 transition whitespace-nowrap text-center"
+            >
               New Arrivals
             </Link>
           </div>
