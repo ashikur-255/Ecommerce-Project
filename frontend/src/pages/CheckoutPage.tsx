@@ -11,7 +11,7 @@ import CheckoutPaymentForm from "../components/Cart/Checkoutpaymentform";
 import Button from "../components/ui/Button";
 import toast from "react-hot-toast";
 import type { AxiosError } from "axios";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError } from "../utils/image";
 
 // Stripe publishable key comes back from our backend's create-intent response,
 // but we also keep a fallback from .env so Elements can mount immediately.
@@ -429,9 +429,7 @@ export default function CheckoutPage() {
                       src={getImageUrl(item.product.images?.[0])}
                       alt={item.product.name}
                       className="w-12 h-12 object-cover rounded-lg bg-gray-100 shrink-0"
-                      onError={(e) => {
-                        e.currentTarget.src = "/placeholder.jpg";
-                      }}
+                      onError={(e) => handleImageError(e, item.product.category, item.product.name)}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-dark truncate">{item.product.name}</p>

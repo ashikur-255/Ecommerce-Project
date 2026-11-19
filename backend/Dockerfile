@@ -15,9 +15,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 # Ensure static upload directory exists
-RUN mkdir -p /app/wwwroot/uploads/products
+RUN mkdir -p /app/wwwroot/uploads/products /app/wwwroot/uploads/categories /app/wwwroot/uploads/users
 
 COPY --from=build /app/publish ./
+COPY wwwroot/ ./wwwroot/
 
 # Default port for container (Program.cs also honors Render's PORT env var)
 ENV ASPNETCORE_URLS=http://+:8080

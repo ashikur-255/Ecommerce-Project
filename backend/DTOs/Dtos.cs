@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace EcommerceAPI.DTOs;
 
@@ -84,6 +84,7 @@ public class CreateProductDto
     [Required, MaxLength(100)] public string Category { get; set; } = string.Empty;
     [Required, MaxLength(100)] public string Brand { get; set; } = string.Empty;
     public IFormFileCollection? Images { get; set; }
+    public List<string> ImageUrls { get; set; } = new();
 
     public List<string> Sizes { get; set; } = new();
     public List<string> Colors { get; set; } = new();

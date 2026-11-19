@@ -6,7 +6,7 @@ import { fetchWishlist, removeFromWishlist, clearWishlist } from '../store/slice
 import { addToCart } from '../store/slices/cartSlice';
 import { FiHeart, FiTrash2, FiShoppingBag } from 'react-icons/fi';
 import Button from '../components/ui/Button';
-import { getImageUrl } from '../utils/image';
+import { getImageUrl, handleImageError } from '../utils/image';
 import Swal from 'sweetalert2';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WishlistItem } from '../services/api';
@@ -169,6 +169,7 @@ export default function WishlistPage() {
                       alt={product.productName}
                       className="w-full aspect-square object-cover"
                       loading="lazy"
+                      onError={(e) => handleImageError(e, undefined, product.productName)}
                     />
                   </Link>
                   

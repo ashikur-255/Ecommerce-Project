@@ -4,7 +4,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchOrderById } from "../store/slices/orderSlice";
 import type { OrderStatus, PaymentStatus } from "../types";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError } from "../utils/image";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   processing: "bg-amber-50 text-amber-600",
@@ -116,9 +116,7 @@ export default function OrderDetailPage() {
                     src={getImageUrl(item.productImage)}
                     alt={item.productName}
                     className="w-16 h-16 object-cover rounded-xl bg-gray-100"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.jpg";
-                    }}
+                    onError={(e) => handleImageError(e, undefined, item.productName)}
                   />
 
                   <div className="flex-1">

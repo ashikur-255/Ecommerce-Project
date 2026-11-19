@@ -10,7 +10,7 @@ import {
 } from "../store/slices/wishlistSlice";
 import { addToCart } from "../store/slices/cartSlice";
 import Button from "../components/ui/Button";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError } from "../utils/image";
 
 export default function WishlistPage() {
   const dispatch = useAppDispatch();
@@ -83,7 +83,7 @@ const handleAddToCart = (productId: number) => {
                     src={getImageUrl(item.image)}
                     alt={item.productName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
+                    onError={(e) => handleImageError(e, undefined, item.productName)}
                   />
                 </Link>
 

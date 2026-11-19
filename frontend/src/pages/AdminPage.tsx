@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchProducts } from "../store/slices/productSlice";
 import Button from "../components/ui/Button";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError } from "../utils/image";
 import CategoryManager from "../components/Categorymanager";
 import PaymentsManager from "../components/PaymentsManager";
 import Pagination from "../components/common/Pagination";
@@ -29,6 +29,7 @@ const EMPTY_FORM = {
   category: "",
   brand: "",
   imageFiles: [] as File[],
+  imageUrls: "",
   sizes: "",
   colors: "",
   tags: "",
@@ -199,6 +200,7 @@ useEffect(() => {
       category: p.category,
       brand: p.brand,
       imageFiles: [],
+      imageUrls: (p.images || []).join("\n"),
       sizes: p.sizes.join("|"),
       colors: p.colors.join("|"),
       tags: p.tags.join("|"),
@@ -220,6 +222,11 @@ useEffect(() => {
 
     setSaving(true);
 
+    const parsedImageUrls = form.imageUrls
+      .split(/[\n,]/)
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0);
+
     const payload = {
       name: form.name.trim(),
       description: form.description.trim(),
@@ -228,6 +235,7 @@ useEffect(() => {
       category: form.category.trim(),
       brand: form.brand.trim() || "adidas",
       imageFiles: form.imageFiles,
+      imageUrls: parsedImageUrls,
       sizes: form.sizes.split("|").map((s) => s.trim()).filter(Boolean),
       colors: form.colors.split("|").map((s) => s.trim()).filter(Boolean),
       tags: form.tags.split("|").map((s) => s.trim()).filter(Boolean),
@@ -459,7 +467,7 @@ useEffect(() => {
                                 src={getImageUrl(p.images?.[0])}
                                 alt={p.name}
                                 className="w-12 h-12 rounded-lg object-cover bg-gray-100"
-                                onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
+                                onError={(e) => handleImageError(e, p.category, p.name)}
                               />
                               <div>
                                 <h3 className="font-semibold text-dark">{p.name}</h3>
@@ -660,7 +668,7 @@ useEffect(() => {
                                       src={getImageUrl(item.productImage)}
                                       alt={item.productName}
                                       className="w-16 h-16 rounded-xl object-cover bg-gray-100 border border-gray-100"
-                                      onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
+                                      onError={(e) => handleImageError(e, undefined, item.productName)}
                                     />
                                     <div className="flex-1">
                                       <div className="flex justify-between gap-3">
@@ -977,30 +985,46 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-dark mb-2">
-                    Product Images (Select multiple)
-                  </label>
+                <div className="col-span-2 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-dark mb-1">
+                      Image URLs (Direct link e.g. Unsplash, Imgur, or Cloudinary)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={form.imageUrls}
+                      onChange={(e) => setForm((prev) => ({ ...prev, imageUrls: e.target.value }))}
+                      placeholder="https://images.unsplash.com/photo-xxx (separate multiple URLs by new line or comma)"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Recommended: Direct URLs are permanent and load instantly across all devices.
+                    </p>
+                  </div>
 
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        imageFiles: Array.from(e.target.files || []),
-                      }))
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-
-                  <p className="text-xs text-gray-400 mt-2">
-                    Hold Ctrl/Cmd to select multiple images. You can upload multiple images at once.
-                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-dark mb-1">
+                      Or Upload Images from Device
+                    </label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          imageFiles: Array.from(e.target.files || []),
+                        }))
+                      }
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Hold Ctrl/Cmd to select multiple images.
+                    </p>
+                  </div>
 
                   {form.imageFiles.length > 0 && (
-                    <div className="flex flex-wrap gap-3 mt-4">
+                    <div className="flex flex-wrap gap-3 mt-2">
                       {form.imageFiles.map((file, index) => (
                         <div key={index} className="relative group">
                           <img

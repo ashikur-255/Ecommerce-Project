@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import toast from "react-hot-toast";
 import { categoryService } from "../services/api";
 import Button from "../components/ui/Button";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleCategoryImageError } from "../utils/image";
 import type { Category } from "../types";
 
 const EMPTY_FORM = {
@@ -183,9 +183,7 @@ export default function CategoryManager() {
                             src={getImageUrl(c.image)}
                             alt={c.name}
                             className="w-12 h-12 rounded-lg object-cover bg-gray-100"
-                            onError={(e) => {
-                              e.currentTarget.src = "/placeholder.jpg";
-                            }}
+                            onError={(e) => handleCategoryImageError(e, c.name)}
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300">

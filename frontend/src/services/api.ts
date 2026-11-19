@@ -116,6 +116,7 @@ export interface CreateProductData {
   category: string;
   brand: string;
   imageFiles: File[];
+  imageUrls?: string[];
   sizes: string[];
   colors: string[];
   tags: string[];
@@ -470,6 +471,9 @@ export const productService = {
     data.colors.forEach((color) => formData.append("colors", color));
     data.tags.forEach((tag) => formData.append("tags", tag));
     data.imageFiles.forEach((file) => formData.append("Images", file));
+    if (data.imageUrls && data.imageUrls.length > 0) {
+      data.imageUrls.forEach((url) => formData.append("imageUrls", url));
+    }
 
     return api.post("/products", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -492,6 +496,9 @@ export const productService = {
     data.colors.forEach((color) => formData.append("colors", color));
     data.tags.forEach((tag) => formData.append("tags", tag));
     data.imageFiles.forEach((file) => formData.append("Images", file));
+    if (data.imageUrls && data.imageUrls.length > 0) {
+      data.imageUrls.forEach((url) => formData.append("imageUrls", url));
+    }
 
     return api.put(`/products/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },

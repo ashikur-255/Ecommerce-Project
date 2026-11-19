@@ -11,7 +11,7 @@ import type { AxiosError } from "axios";
 
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchMyOrders } from "../store/slices/orderSlice";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError } from "../utils/image";
 
 import { orderService } from "../services/api";
 
@@ -295,9 +295,7 @@ export default function OrdersPage() {
                         src={getImageUrl(item.productImage)}
                         alt={item.productName}
                         loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.jpg";
-                        }}
+                        onError={(e) => handleImageError(e, undefined, item.productName)}
                         className="
                           w-14
                           h-14

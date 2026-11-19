@@ -3,7 +3,7 @@ import { FiShoppingCart, FiStar } from "react-icons/fi";
 import Swal from "sweetalert2";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { addToCart } from "../../store/slices/cartSlice";
-import { getImageUrl } from "../../utils/image";
+import { getImageUrl, handleImageError } from "../../utils/image";
 import type { Product } from "../../types";
 // ⬇️ import যোগ করো
 // ✅ সঠিক path
@@ -119,6 +119,7 @@ export default function ProductCard({
     alt={product.name}
     loading="lazy"
     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    onError={(e) => handleImageError(e, product.category, product.name)}
   />
 
   {/* Add To Cart Button */}

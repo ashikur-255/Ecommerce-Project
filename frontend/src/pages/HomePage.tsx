@@ -13,7 +13,7 @@ import { fetchNewArrivals, fetchFeatured } from "../store/slices/productSlice";
 import { addToCart } from "../store/slices/cartSlice";
 import { categoryService } from "../services/api";
 import StarRating from "../components/ui/StarRating";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError, handleCategoryImageError } from "../utils/image";
 import type { Category } from "../types";
 import StatsSection from "../components/home/StatsSection";
 import ExclusiveClubSection from "../components/home/ExclusiveClubSection";
@@ -256,7 +256,7 @@ useEffect(() => {
                       src={getImageUrl(category.image)}
                       alt={category.name}
                       className="h-[450px] w-full object-cover transition duration-700 group-hover:scale-110 bg-light"
-                      onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
+                      onError={(e) => handleCategoryImageError(e, category.name)}
                     />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition duration-500" />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -311,7 +311,7 @@ useEffect(() => {
                     src={getImageUrl(product.images?.[0])}
                     alt={product.name}
                     className="w-full aspect-square object-cover"
-                    onError={(e) => (e.currentTarget.src = "/placeholder.jpg")}
+                    onError={(e) => handleImageError(e, product.category, product.name)}
                   />
                   <div className="absolute top-full right-0 w-full h-full flex items-center justify-center bg-white/50 group-hover:top-0 transition-all">
                     <Link
@@ -429,9 +429,7 @@ useEffect(() => {
                 duration-500
                 group-hover:scale-105
               "
-              onError={(e) => {
-                e.currentTarget.src = "/placeholder.jpg";
-              }}
+              onError={(e) => handleImageError(e, product.category, product.name)}
             />
 
             {/* Discount Badge */}

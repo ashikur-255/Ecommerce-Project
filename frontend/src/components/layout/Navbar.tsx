@@ -14,7 +14,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { logout } from "../../store/slices/authSlice";
 import { removeFromCart, updateCartItem, fetchCart } from "../../store/slices/cartSlice";
 import { useLocation } from "react-router-dom";
-import { getImageUrl } from "../../utils/image";
+import { getImageUrl, getAvatarUrl } from "../../utils/image";
 import type { CartItem } from "../../types";
 // ⬇️ import যোগ করো (উপরে অন্য imports-এর সাথে)
 import { resetWishlist } from "../../store/slices/wishlistSlice";
@@ -41,12 +41,7 @@ export default function Navbar() {
   const userRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:5085/api";
-
-const avatarUrl = user?.avatar
-  ? `${API_BASE.replace("/api", "")}${user.avatar}`
-  : null;
+  const avatarUrl = user?.avatar ? getAvatarUrl(user.avatar) : null;
 
   // Handle scroll effect
   useEffect(() => {

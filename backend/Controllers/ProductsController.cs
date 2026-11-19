@@ -1,4 +1,4 @@
-﻿using EcommerceAPI.Data;
+using EcommerceAPI.Data;
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -187,11 +187,16 @@ public class ProductsController : ControllerBase
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage))));
 
-        // ✅ FIX: Check Images property (not imageFiles)
+        // ✅ Check ImageUrls and Images properties
         var imageUrls = new List<string>();
+        if (dto.ImageUrls != null && dto.ImageUrls.Any())
+        {
+            imageUrls.AddRange(dto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)));
+        }
         if (dto.Images != null && dto.Images.Any())
         {
-            imageUrls = await SaveImages(dto.Images);
+            var saved = await SaveImages(dto.Images);
+            imageUrls.AddRange(saved);
         }
 
         var product = new Product
@@ -245,14 +250,20 @@ public class ProductsController : ControllerBase
         product.Category = dto.Category.Trim();
         product.Brand = dto.Brand.Trim();
 
-        // ✅ FIX: Save new images if provided
+        // ✅ FIX: Save new images or URLs if provided
+        var imageUrls = new List<string>();
+        if (dto.ImageUrls != null && dto.ImageUrls.Any())
+        {
+            imageUrls.AddRange(dto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)));
+        }
         if (dto.Images != null && dto.Images.Any())
         {
-            var imageUrls = await SaveImages(dto.Images);
-            if (imageUrls.Any())
-            {
-                product.Images = JoinPipe(imageUrls);
-            }
+            var saved = await SaveImages(dto.Images);
+            imageUrls.AddRange(saved);
+        }
+        if (imageUrls.Any())
+        {
+            product.Images = JoinPipe(imageUrls);
         }
 
         product.Sizes = JoinPipe(dto.Sizes);

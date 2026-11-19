@@ -182,7 +182,15 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center sticky top-24">
               <div className="relative w-24 h-24 mx-auto mb-4 group">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={user.name} className="w-24 h-24 rounded-full object-cover border-4 border-primary/10" />
+                  <img
+                    src={avatarUrl}
+                    alt={user.name}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-primary/10"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/default-avatar.png";
+                    }}
+                  />
                 ) : (
                   <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-3xl border-4 border-primary/10">
                     {user.name?.charAt(0).toUpperCase() ?? "U"}

@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import type { AxiosError } from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { getImageUrl } from "../utils/image";
+import { getImageUrl, handleImageError } from "../utils/image";
 import WishlistButton from "../components/common/WishlistButton";
 import { productService } from "../services/api";
 import ProductCard from "../components/product/ProductCard"; // path তোমার structure অনুযায়ী ঠিক করো
@@ -261,9 +261,7 @@ useEffect(() => {
                 alt={product.name}
                 className="w-full h-full object-cover"
                 loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.src = "/placeholder.jpg";
-                }}
+                onError={(e) => handleImageError(e, product.category, product.name)}
               />
             </div>
             {product.images.length > 1 && (
@@ -278,9 +276,7 @@ useEffect(() => {
                       alt={product.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.src = "/placeholder.jpg";
-                      }}
+                      onError={(e) => handleImageError(e, product.category, product.name)}
                     />
                   </button>
                 ))}

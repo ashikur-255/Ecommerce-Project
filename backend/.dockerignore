@@ -9,5 +9,3 @@
 **/appsettings.Development.json
 .env
 .env.*
-wwwroot/uploads/**
-!wwwroot/uploads/.gitkeep
