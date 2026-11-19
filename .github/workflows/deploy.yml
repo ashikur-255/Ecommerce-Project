@@ -3,6 +3,8 @@ name: CI/CD Deployment Pipeline
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -38,53 +40,10 @@ jobs:
           npm ci
           npm run build
 
-  deploy:
-    name: Deploy to Production VPS
-    needs: validate
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    env:
-      SERVER_HOST: ${{ secrets.SERVER_HOST }}
-      SERVER_USER: ${{ secrets.SERVER_USER }}
-      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
-    steps:
-      - name: Check VPS Secrets Configuration
-        id: check_vps
+      - name: Production Deployment Summary
         run: |
-          if [ -z "$SERVER_HOST" ] || [ -z "$SERVER_USER" ] || [ -z "$SERVER_SSH_KEY" ]; then
-            echo "⚠️ VPS deployment secrets (SERVER_HOST, SERVER_USER, SERVER_SSH_KEY) are not set in GitHub Secrets."
-            echo "ℹ️ Since your app is hosted on Vercel (Frontend) and Render (Backend), VPS SSH deployment is safely skipped."
-            echo "has_vps=false" >> $GITHUB_OUTPUT
-          else
-            echo "✅ VPS secrets detected. Proceeding with SSH deployment..."
-            echo "has_vps=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Deploy via SSH
-        if: steps.check_vps.outputs.has_vps == 'true'
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_SSH_PORT || 22 }}
-          script: |
-            set -e
-            echo "🚀 Starting Deployment on Production Server..."
-            
-            # Navigate to project directory
-            cd ${{ secrets.SERVER_APP_DIR || '~/Ecommerce-Project' }}
-            
-            # Pull latest changes
-            echo "📥 Pulling latest git code..."
-            git pull origin main
-            
-            # Rebuild and restart containers
-            echo "🐳 Building and starting Docker containers..."
-            docker compose -f docker-compose.prod.yml up -d --build
-            
-            # Clean up dangling images to save disk space
-            echo "🧹 Cleaning unused docker images..."
-            docker image prune -f
-            
-            echo "✅ Deployment completed successfully!"
+          echo "========================================================"
+          echo "✅ Full-stack build & typecheck validated successfully!"
+          echo "🌐 Frontend (Vercel): https://www.clickebd.xyz"
+          echo "⚙️ Backend (Render):  https://ecommerce-backend-api-j6z4.onrender.com"
+          echo "========================================================"
