@@ -14,7 +14,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { logout } from "../../store/slices/authSlice";
 import { removeFromCart, updateCartItem, fetchCart } from "../../store/slices/cartSlice";
 import { useLocation } from "react-router-dom";
-import { getImageUrl, getAvatarUrl } from "../../utils/image";
+import { getImageUrl, getProductImageUrl, handleImageError, getAvatarUrl } from "../../utils/image";
 import type { CartItem } from "../../types";
 // ⬇️ import যোগ করো (উপরে অন্য imports-এর সাথে)
 import { resetWishlist } from "../../store/slices/wishlistSlice";
@@ -359,13 +359,11 @@ const handleLogout = useCallback(() => {
                             className="flex gap-3 items-center bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors"
                           >
                             <img
-                              src={getImageUrl(item.product.images?.[0])}
-                              alt={item.product.name}
+                              src={getProductImageUrl(item.product?.images?.[0], item.product?.category, item.product?.name)}
+                              alt={item.product?.name || "Product"}
                               className="w-14 h-14 rounded-lg object-cover bg-white border border-gray-100 flex-shrink-0"
                               loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.src = "/placeholder.jpg";
-                              }}
+                              onError={(e) => handleImageError(e, item.product?.category, item.product?.name)}
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-dark truncate">
