@@ -18,6 +18,7 @@ import type { Category } from "../types";
 import StatsSection from "../components/home/StatsSection";
 import ExclusiveClubSection from "../components/home/ExclusiveClubSection";
 import FlashSaleBanner from "../components/home/FlashSaleBanner";
+import heroMobile from "../assets/Elegant BDFashions City Stroll.png";
 
 const REVIEWS = [
   {
@@ -173,16 +174,26 @@ useEffect(() => {
       {/* HERO */}
       <section id="hero" className="relative min-h-[100dvh] md:min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20 flex items-center">
         <div className="absolute inset-0">
+          {/* Mobile Background Image (Vertical Portrait) */}
+          <img
+            src={heroMobile}
+            alt="BDF Hero Mobile"
+            className="w-full h-full object-cover object-center opacity-45 md:hidden"
+            onError={(e) => {
+              e.currentTarget.src = "/hero-mobile.png";
+            }}
+          />
+          {/* Desktop Background Image (Horizontal Landscape) */}
           <img
             src="/Logo of BDF.png"
-            alt="BDF Hero"
-            className="w-full h-full object-cover object-[68%_center] md:object-center opacity-50 md:opacity-40"
+            alt="BDF Hero Desktop"
+            className="hidden md:block w-full h-full object-cover object-center opacity-40"
             onError={(e) => {
               e.currentTarget.src = "/src/assets/Logo of BDF.png";
             }}
           />
-          {/* Subtle mobile dark gradient for crystal clear text readability without affecting desktop */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 md:hidden" />
+          {/* Mobile dark gradient overlay for optimal text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 md:hidden" />
         </div>
         <div className="relative w-full max-w-7xl mx-auto px-6 py-16 sm:py-24 lg:py-32">
           <span className="uppercase tracking-widest text-primary font-bold text-xs sm:text-sm">
