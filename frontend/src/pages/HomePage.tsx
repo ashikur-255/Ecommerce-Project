@@ -11,9 +11,12 @@ import {
   FiShoppingBag, 
   FiTruck, 
   FiShield, 
-  FiRefreshCw 
+  FiRefreshCw,
+  FiChevronLeft,
+  FiChevronRight
 } from "react-icons/fi";
 import { HiSparkles } from "react-icons/hi";
+import WishlistButton from "../components/common/WishlistButton";
 
 import ScrollToTopButton from "../components/ui/ScrollToTopButton";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
@@ -358,62 +361,218 @@ useEffect(() => {
       </section>
 
       {/* NEW ARRIVALS */}
-      <section id="new" className="px-6 sm:px-10 lg:px-20 py-12">
-        <div className="heading text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-dark">
-            New{" "}
-            <span style={btnClip} className="inline-block bg-primary text-white uppercase px-4 py-1">
-              Arrival
-            </span>
-          </h1>
-        </div>
-        {isLoading ? (
-          <div className="grid grid-cols-4 gap-6 mt-8">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="aspect-square bg-light animate-pulse" />
-            ))}
+      <section id="new" className="px-4 sm:px-8 lg:px-16 py-16 sm:py-20 bg-gradient-to-b from-white via-amber-50/20 to-white relative overflow-hidden">
+        {/* Decorative background glow */}
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 -right-20 w-80 h-80 bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto relative">
+          {/* Section Heading & Controls */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 sm:mb-14">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest mb-3">
+                <HiSparkles className="text-amber-500 animate-pulse" />
+                <span>Fresh Drops 2026</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-dark tracking-tight">
+                New{" "}
+                <span style={btnClip} className="inline-block bg-primary text-white uppercase px-5 py-1 shadow-md">
+                  Arrival
+                </span>
+              </h2>
+              <p className="text-gray-500 text-sm sm:text-base mt-3 max-w-xl">
+                Be the first to wear the season’s latest drop. Performance gear & everyday luxury crafted for modern champions.
+              </p>
+            </div>
+
+            {/* View All & Custom Navigation Arrows */}
+            <div className="flex items-center gap-3">
+              <Link
+                to="/products?isNew=true"
+                className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold uppercase tracking-wider text-dark bg-white hover:bg-dark hover:text-white border border-gray-200 transition-all duration-300 shadow-xs hover:shadow-md"
+              >
+                <span>View Full Drop</span>
+                <FiArrowRight size={14} />
+              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  className="new-arrival-prev w-10 h-10 rounded-full border border-gray-200 bg-white hover:bg-primary hover:border-primary hover:text-white text-dark flex items-center justify-center transition-all duration-300 shadow-xs hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  aria-label="Previous"
+                >
+                  <FiChevronLeft size={18} />
+                </button>
+                <button
+                  className="new-arrival-next w-10 h-10 rounded-full border border-gray-200 bg-white hover:bg-primary hover:border-primary hover:text-white text-dark flex items-center justify-center transition-all duration-300 shadow-xs hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  aria-label="Next"
+                >
+                  <FiChevronRight size={18} />
+                </button>
+              </div>
+            </div>
           </div>
-        ) : error ? (
-          <p className="text-center text-red-500 mt-8">⚠️ {error}</p>
-        ) : newArrivals.length > 0 ? (
-          <Swiper
-            modules={[Autoplay]}
-            spaceBetween={30}
-            loop
-            autoplay={{ delay: 3500, disableOnInteraction: false }}
-            breakpoints={{
-              0: { slidesPerView: 1 },
-              568: { slidesPerView: 2 },
-              768: { slidesPerView: 3 },
-              1020: { slidesPerView: 4 },
-            }}
-            className="mt-8"
-          >
-            {newArrivals.map((product) => (
-              <SwiperSlide key={product.id}>
-                <div className="relative overflow-hidden bg-light group">
-                  <img
-                    src={getProductImageUrl(product.images?.[0], product.category, product.name)}
-                    alt={product.name}
-                    className="w-full aspect-square object-cover"
-                    onError={(e) => handleImageError(e, product.category, product.name)}
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
-                    <Link
-                      to={`/products/${product.id}`}
-                      className="inline-flex items-center gap-2 bg-white hover:bg-primary text-dark font-extrabold uppercase px-6 py-2.5 rounded-full text-xs tracking-wider transition-all duration-300 hover:scale-105 shadow-xl"
-                    >
-                      <span>Quick View</span>
-                      <FiArrowRight />
-                    </Link>
-                  </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-3xl p-4 border border-gray-100 shadow-xs animate-pulse">
+                  <div className="aspect-[4/5] bg-gray-100 rounded-2xl mb-4" />
+                  <div className="h-4 bg-gray-100 rounded w-1/3 mb-2" />
+                  <div className="h-5 bg-gray-100 rounded w-3/4 mb-3" />
+                  <div className="h-6 bg-gray-100 rounded w-1/2 mb-4" />
+                  <div className="h-10 bg-gray-100 rounded-xl w-full" />
                 </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        ) : (
-          <p className="text-center text-gray-400 mt-8">No new arrivals at the moment.</p>
-        )}
+              ))}
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center bg-white rounded-3xl border border-red-100 text-red-500">
+              ⚠️ {error}
+            </div>
+          ) : newArrivals.length > 0 ? (
+            <Swiper
+              modules={[Autoplay, Navigation]}
+              navigation={{
+                prevEl: ".new-arrival-prev",
+                nextEl: ".new-arrival-next",
+              }}
+              spaceBetween={24}
+              loop={newArrivals.length > 4}
+              autoplay={{ delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }}
+              breakpoints={{
+                0: { slidesPerView: 1.15, spaceBetween: 16 },
+                480: { slidesPerView: 1.5, spaceBetween: 18 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                768: { slidesPerView: 3, spaceBetween: 22 },
+                1024: { slidesPerView: 4, spaceBetween: 24 },
+              }}
+              className="!pb-4"
+            >
+              {newArrivals.map((product) => {
+                const discount =
+                  product.originalPrice > product.price
+                    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                    : 0;
+
+                return (
+                  <SwiperSlide key={product.id} className="h-auto">
+                    <div className="group relative bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-xs hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
+                      {/* Image Showcase */}
+                      <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100/60 flex items-center justify-center p-3">
+                        <img
+                          src={getProductImageUrl(product.images?.[0], product.category, product.name)}
+                          alt={product.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-108"
+                          onError={(e) => handleImageError(e, product.category, product.name)}
+                        />
+
+                        {/* Floating Top Badges */}
+                        <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 pointer-events-none">
+                          <span className="bg-gradient-to-r from-amber-500 to-primary text-white text-[10px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full shadow-md backdrop-blur-md">
+                            NEW
+                          </span>
+                          {discount > 0 && (
+                            <span className="bg-red-500/95 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                              {discount}% OFF
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Floating Wishlist Heart */}
+                        <div className="absolute top-4 right-4 z-10">
+                          <WishlistButton
+                            productId={product.id}
+                            size={16}
+                            className="!w-9 !h-9 bg-white/90 backdrop-blur-md hover:bg-white text-dark shadow-md border-0 rounded-full transition-transform hover:scale-110"
+                          />
+                        </div>
+
+                        {/* Luxury Desktop Hover Overlay with Action Buttons */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-dark/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 rounded-2xl m-3 flex items-end justify-center p-4">
+                          <div className="w-full flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <Link
+                              to={`/products/${product.id}`}
+                              className="flex-1 py-3 px-4 rounded-xl bg-white hover:bg-primary text-dark hover:text-white font-extrabold text-xs uppercase tracking-wider text-center shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                              <span>Shop Now</span>
+                              <FiArrowRight size={14} />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAddToCart(product.id)}
+                              className="p-3 rounded-xl bg-primary hover:bg-amber-600 text-white shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+                              title="Add to Cart"
+                            >
+                              <FiShoppingCart size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-5 flex flex-col flex-1 justify-between bg-white">
+                        <div>
+                          {/* Brand & Star Rating */}
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                              {product.brand || "Adidas"}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <StarRating rating={product.rating || 5} />
+                              <span className="text-[11px] font-medium text-gray-400">
+                                ({product.reviewCount || 0})
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Product Title */}
+                          <Link to={`/products/${product.id}`} className="block">
+                            <h3 className="font-extrabold text-dark text-base hover:text-primary transition-colors line-clamp-1 leading-snug">
+                              {product.name}
+                            </h3>
+                          </Link>
+
+                          {/* Price Row */}
+                          <div className="flex items-baseline gap-2.5 mt-2.5">
+                            <span className="text-xl font-black text-dark">
+                              ৳{product.price.toLocaleString()}
+                            </span>
+                            {discount > 0 && (
+                              <span className="text-xs font-semibold text-gray-400 line-through">
+                                ৳{product.originalPrice.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Explicit "Shop Now" Button (Always visible on mobile & desktop) */}
+                        <Link
+                          to={`/products/${product.id}`}
+                          className="mt-4 w-full py-2.5 px-4 rounded-xl bg-gray-50 hover:bg-primary text-dark hover:text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 border border-gray-100 group-hover:border-primary group-hover:bg-primary group-hover:text-white shadow-xs group-hover:shadow-md"
+                        >
+                          <span>Shop Now</span>
+                          <FiArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
+                        </Link>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+          ) : (
+            <p className="text-center text-gray-400 py-12">No new arrivals at the moment.</p>
+          )}
+
+          {/* Mobile View All Link */}
+          <div className="mt-8 text-center sm:hidden">
+            <Link
+              to="/products?isNew=true"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-extrabold uppercase tracking-wider text-white bg-dark hover:bg-primary shadow-md transition-colors"
+            >
+              <span>View All New Arrivals</span>
+              <FiArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
       </section>
 
 {/* FEATURED / OUR PRODUCTS */}
