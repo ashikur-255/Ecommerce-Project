@@ -759,6 +759,26 @@ const authSlice = createSlice({
       })
 
       // ============================================================
+      // VERIFY PHONE PUBLIC (UNAUTHENTICATED)
+      // ============================================================
+      .addCase(verifyPhonePublic.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyPhonePublic.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+        if (state.user) {
+          state.user.isPhoneVerified = true;
+          storage.setUser(state.user);
+        }
+      })
+      .addCase(verifyPhonePublic.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to verify phone";
+      })
+
+      // ============================================================
       // RESEND VERIFICATION
       // ============================================================
       .addCase(resendVerification.pending, (state) => {

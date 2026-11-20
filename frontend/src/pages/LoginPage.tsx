@@ -32,12 +32,14 @@ export function LoginPage() {
   }, [user, navigate, dispatch]);
 
   const handleResendVerification = async () => {
-    if (loginMethod === "email" && !form.email) {
+    const isEmail = error?.toLowerCase().includes("email") || loginMethod === "email";
+
+    if (isEmail && !form.email.trim()) {
       setLocalError("Please enter your email address first.");
       return;
     }
     
-    if (loginMethod === "phone" && !form.phone) {
+    if (!isEmail && !form.phone.trim()) {
       setLocalError("Please enter your phone number first.");
       return;
     }
@@ -46,23 +48,17 @@ export function LoginPage() {
     setLocalError("");
 
     try {
-      const payload = loginMethod === "email" 
+      const payload = isEmail 
         ? { email: form.email.trim(), type: "email" as const }
         : { phone: form.phone.trim(), type: "phone" as const };
 
       await dispatch(resendVerification(payload)).unwrap();
       
-      const message = loginMethod === "email" 
-        ? "Verification email sent successfully! Please check your inbox."
-        : "Verification code sent successfully! Please check your phone.";
+      const message = isEmail 
+        ? "Verification email sent! Please check your inbox and spam folder."
+        : "Verification code sent! Please check your phone for the 6-digit OTP.";
       
       setLocalError(message);
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        if (localError === message) {
-          setLocalError("");
-        }
-      }, 5000);
     } catch (err) {
       const msg = typeof err === "string" ? err : "Failed to resend verification.";
       setLocalError(msg);
@@ -72,18 +68,19 @@ export function LoginPage() {
   };
 
   const handleRedirectToVerification = () => {
-    if (loginMethod === "email") {
+    const isEmail = error?.toLowerCase().includes("email") || loginMethod === "email";
+    if (isEmail) {
       navigate("/verify-email", {
         state: { 
-          email: form.email || "",
-          message: "Please verify your email before logging in."
+          email: form.email.trim() || "",
+          message: error || "Please verify your email before logging in."
         }
       });
     } else {
       navigate("/verify-phone", {
         state: { 
-          phone: form.phone || "",
-          message: "Please verify your phone number before logging in."
+          phone: form.phone.trim() || "",
+          message: error || "Please verify your phone number before logging in."
         }
       });
     }
@@ -129,7 +126,7 @@ export function LoginPage() {
           <div className="text-center mb-8">
             <span className="text-4xl">👕</span>
             <h1 className="text-2xl font-black text-dark mt-2">Welcome Back</h1>
-            <p className="text-gray-400 text-sm mt-1">Login to your adidas account</p>
+            <p className="text-gray-400 text-sm mt-1">Login to your BDFashions account</p>
           </div>
 
           {successMessage && (
@@ -255,20 +252,23 @@ export function LoginPage() {
           </form>
 
           {needsVerification && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-5 p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
+              <p className="text-xs text-amber-900 font-medium">
+                Your account requires verification before accessing all features.
+              </p>
               <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={handleRedirectToVerification}
-                  className="w-full bg-primary text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-primary-dark transition-colors text-sm"
+                  className="w-full bg-primary text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-primary-dark transition shadow-sm text-sm"
                 >
                   Go to Verification
                 </button>
                 <button
                   type="button"
                   onClick={handleResendVerification}
-                  disabled={isResending || isLoading}
-                  className="w-full text-primary font-semibold hover:underline transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isResending}
+                  className="w-full py-2 text-primary font-semibold hover:underline transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isResending ? "Sending..." : "Resend Verification Code"}
                 </button>

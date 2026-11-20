@@ -1,227 +1,310 @@
-// pages/WishlistPage.tsx
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchWishlist, removeFromWishlist, clearWishlist } from '../store/slices/wishlistSlice'; // ← Now clearWishlist exists
-import { addToCart } from '../store/slices/cartSlice';
-import { FiHeart, FiTrash2, FiShoppingBag } from 'react-icons/fi';
-import Button from '../components/ui/Button';
-import { getImageUrl, handleImageError } from '../utils/image';
-import Swal from 'sweetalert2';
-import { motion, AnimatePresence } from 'framer-motion';
-import { WishlistItem } from '../services/api';
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FiPhone, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiShield } from "react-icons/fi";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
+import { verifyPhonePublic, resendVerification, clearError } from "../store/slices/authSlice";
+import Button from "../components/ui/Button";
+import toast from "react-hot-toast";
 
-export default function WishlistPage() {
+export default function VerifyPhonePage() {
   const dispatch = useAppDispatch();
-  const { items, count, loading, error } = useAppSelector((state) => state.wishlist);
-  const { user } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAppSelector((s) => s.auth);
 
+  const phoneFromState = location.state?.phone as string | undefined;
+  const messageFromState = location.state?.message as string | undefined;
+
+  const [phone, setPhone] = useState<string>(phoneFromState || user?.phone || "");
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successNotice, setSuccessNotice] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
+
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Clear errors on unmount
   useEffect(() => {
-    if (user) {
-      dispatch(fetchWishlist());
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
+
+  // Focus the first OTP input on mount
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
+  // Resend cooldown countdown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  // Handle digit change in OTP inputs
+  const handleDigitChange = (index: number, value: string) => {
+    // Only accept numeric characters
+    const cleanValue = value.replace(/[^0-9]/g, "");
+
+    // Handle paste of full 6-digit code
+    if (cleanValue.length > 1) {
+      const pastedDigits = cleanValue.slice(0, 6).split("");
+      const newDigits = [...digits];
+      for (let i = 0; i < 6; i++) {
+        newDigits[i] = pastedDigits[i] || "";
+      }
+      setDigits(newDigits);
+      const nextFocus = Math.min(pastedDigits.length, 5);
+      inputRefs.current[nextFocus]?.focus();
+      return;
     }
-  }, [dispatch, user]);
 
-  const handleRemoveItem = async (productId: number, productName: string) => {
-    const result = await Swal.fire({
-      title: 'Remove from wishlist?',
-      text: `Are you sure you want to remove "${productName}"?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Remove',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#ef4444',
-    });
+    const newDigits = [...digits];
+    newDigits[index] = cleanValue;
+    setDigits(newDigits);
 
-    if (result.isConfirmed) {
-      dispatch(removeFromWishlist(productId));
-    }
-  };
-
-  const handleAddToCart = (product: WishlistItem) => {
-    dispatch(
-      addToCart({
-        productId: product.productId,
-        quantity: 1,
-        size: "",
-        color: "",
-      })
-    );
-
-    Swal.fire({
-      icon: "success",
-      title: "Added to Cart",
-      text: "Product added successfully!",
-      timer: 1500,
-      showConfirmButton: false,
-    });
-  };
-
-  const handleClearWishlist = async () => {
-    const result = await Swal.fire({
-      title: 'Clear wishlist?',
-      text: 'This action cannot be undone.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Clear All',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#ef4444',
-    });
-
-    if (result.isConfirmed) {
-      dispatch(clearWishlist()); // ← Now this works
+    // Auto-advance to next box if character entered
+    if (cleanValue && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
-  // Show error if any
-  if (error) {
-    return (
-      <main className="pt-24 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-dark mb-2">Error Loading Wishlist</h2>
-          <p className="text-gray-500 mb-6">{error}</p>
-          <Button onClick={() => dispatch(fetchWishlist())}>
-            Try Again
-          </Button>
-        </div>
-      </main>
-    );
-  }
+  // Handle backspace navigation
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
 
-  if (!user) {
-    return (
-      <main className="pt-24 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-          <FiHeart className="mx-auto text-6xl text-gray-300 mb-4" />
-          <h2 className="text-2xl font-bold text-dark mb-2">Your Wishlist is Empty</h2>
-          <p className="text-gray-500 mb-6">Please login to view your wishlist</p>
-          <Link to="/login">
-            <Button>Login Now</Button>
-          </Link>
-        </div>
-      </main>
-    );
-  }
+  const code = digits.join("");
 
-  if (loading) {
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setSuccessNotice(null);
+
+    const cleanPhone = phone.trim();
+    if (!cleanPhone) {
+      setErrorMessage("Please enter your phone number.");
+      toast.error("Please enter your phone number.");
+      return;
+    }
+
+    if (code.length !== 6) {
+      setErrorMessage("Please enter the complete 6-digit verification code.");
+      toast.error("Please enter all 6 digits.");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const res = await dispatch(
+        verifyPhonePublic({
+          phone: cleanPhone,
+          code: code,
+        })
+      ).unwrap();
+
+      setIsVerified(true);
+      setSuccessNotice(res.message || "Phone verified successfully!");
+      toast.success("Phone verified successfully!");
+    } catch (err) {
+      const msg = typeof err === "string" ? err : "Verification failed. Invalid or expired OTP.";
+      setErrorMessage(msg);
+      toast.error(msg);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    const cleanPhone = phone.trim();
+    if (!cleanPhone) {
+      toast.error("Please provide a phone number.");
+      return;
+    }
+
+    setIsResending(true);
+    setErrorMessage("");
+    setSuccessNotice(null);
+
+    try {
+      const res = await dispatch(
+        resendVerification({
+          phone: cleanPhone,
+          type: "phone",
+        })
+      ).unwrap();
+
+      setSuccessNotice(res.message || "A new 6-digit code has been sent to your phone.");
+      toast.success("New code sent to your phone!");
+      setResendCooldown(60);
+      setDigits(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
+    } catch (err) {
+      const msg = typeof err === "string" ? err : "Failed to resend code. Please try again.";
+      setErrorMessage(msg);
+      toast.error(msg);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // Success view
+  if (isVerified) {
     return (
-      <main className="pt-24 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-light rounded-2xl animate-pulse h-80" />
-            ))}
+      <main className="min-h-screen pt-20 pb-16 bg-[#F8F9FA] flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 p-8 text-center animate-fade-in">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+            <FiCheckCircle className="w-10 h-10" />
           </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <main className="pt-24 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-          <FiHeart className="mx-auto text-6xl text-gray-300 mb-4" />
-          <h2 className="text-2xl font-bold text-dark mb-2">Your Wishlist is Empty</h2>
-          <p className="text-gray-500 mb-6">Start adding products you love!</p>
-          <Link to="/products">
-            <Button>Browse Products</Button>
-          </Link>
+          <h2 className="text-2xl font-black text-dark mb-2">Phone Verified!</h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            {successNotice || "Your phone number has been verified successfully. You can now log in to your BDFashions account."}
+          </p>
+          <Button
+            onClick={() => navigate("/login")}
+            variant="primary"
+            size="lg"
+            className="w-full"
+          >
+            Continue to Login
+          </Button>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="pt-24 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-black text-dark">My Wishlist</h1>
-            <p className="text-gray-500 mt-1">
-              {count} items
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleClearWishlist}>
-            <FiTrash2 className="mr-2" />
-            Clear All
-          </Button>
+    <main className="min-h-screen pt-20 pb-16 bg-[#F8F9FA] flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 p-8 text-center animate-fade-in">
+        {/* Shield / Phone Icon */}
+        <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-amber-50 flex items-center justify-center text-primary">
+          <FiShield className="w-10 h-10" />
         </div>
 
-        {/* Wishlist Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <AnimatePresence>
-            {items.map((product, index) => (
-              <motion.div
-                key={product.productId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
+        <h1 className="text-2xl font-black text-dark mb-2">Verify Phone Number</h1>
+        <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+          {messageFromState || "We've sent a 6-digit OTP verification code to your phone number."}
+        </p>
+
+        {/* Phone number input / display */}
+        <div className="text-left mb-6">
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">
+            Phone Number
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <FiPhone className="w-4 h-4" />
+            </div>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+8801XXXXXXXXX"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-dark outline-none focus:border-primary focus:bg-white transition"
+            />
+          </div>
+          <p className="text-[11px] text-gray-400 mt-1 pl-1">
+            Example: 017XXXXXXXX or +88017XXXXXXXX
+          </p>
+        </div>
+
+        {/* 6-Digit OTP Input Boxes */}
+        <form onSubmit={handleVerify} className="space-y-6">
+          <div className="text-left">
+            <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider text-center">
+              Enter 6-Digit Verification Code
+            </label>
+            <div className="flex justify-between gap-2 sm:gap-2.5">
+              {digits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => {
+                    inputRefs.current[idx] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleDigitChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(idx, e)}
+                  className={`w-12 h-14 sm:w-13 sm:h-14 text-center text-xl font-bold rounded-xl border transition-all outline-none ${
+                    digit
+                      ? "border-primary bg-amber-50/30 text-dark shadow-sm"
+                      : "border-gray-200 bg-gray-50 text-dark focus:border-primary focus:bg-white"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Feedback messages */}
+          {successNotice && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl text-left flex items-start gap-2.5">
+              <FiCheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>{successNotice}</span>
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl text-left flex items-start gap-2.5">
+              <FiAlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="space-y-3">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              loading={isVerifying}
+              disabled={isVerifying || code.length !== 6 || !phone.trim()}
+            >
+              {isVerifying ? "Verifying..." : "Verify & Continue"}
+            </Button>
+
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending || resendCooldown > 0 || !phone.trim()}
+                className="text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                <div className="relative">
-                  <Link to={`/product/${product.productId}`}>
-                    <img
-                      src={getImageUrl(product.image)}
-                      alt={product.productName}
-                      className="w-full aspect-square object-cover"
-                      loading="lazy"
-                      onError={(e) => handleImageError(e, undefined, product.productName)}
-                    />
-                  </Link>
-                  
-                  <button
-                    onClick={() =>
-                      handleRemoveItem(product.productId, product.productName)
-                    }
-                    className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur rounded-full text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <FiTrash2 size={16} />
-                  </button>
+                {isResending
+                  ? "Sending..."
+                  : resendCooldown > 0
+                  ? `Resend Code in ${resendCooldown}s`
+                  : "Resend Code"}
+              </button>
 
-                  {product.isNew && (
-                    <span className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded">
-                      NEW
-                    </span>
-                  )}
-                </div>
+              <Link
+                to="/verify-email"
+                state={{ phone }}
+                className="text-xs text-gray-500 hover:text-dark font-medium"
+              >
+                Verify via email instead?
+              </Link>
+            </div>
+          </div>
+        </form>
 
-                <div className="p-4">
-                  <Link to={`/product/${product.productId}`}>
-                    <h3 className="font-semibold text-dark hover:text-primary transition-colors line-clamp-2">
-                      {product.productName}
-                    </h3>
-                  </Link>
-                  
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-dark">
-                      ৳{product.price.toLocaleString()}
-                    </span>
-
-                    {product.originalPrice > product.price && (
-                      <span className="text-sm text-gray-400 line-through">
-                        ৳{product.originalPrice.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleAddToCart(product)}
-                    >
-                      <FiShoppingBag className="mr-2" />
-                      Add to Cart
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div className="mt-6 pt-5 border-t border-gray-100">
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-dark transition"
+          >
+            <FiArrowLeft className="w-4 h-4" /> Back to Login
+          </Link>
         </div>
       </div>
     </main>

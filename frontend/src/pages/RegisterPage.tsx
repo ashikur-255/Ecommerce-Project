@@ -94,6 +94,7 @@ export function RegisterPage() {
           replace: true,
           state: { 
             email: email,
+            phone: phone || undefined,
             message: hasPhone 
               ? "Account created! Please verify your email. A verification code has also been sent to your phone."
               : "Account created successfully. Please verify your email before logging in."
@@ -104,7 +105,7 @@ export function RegisterPage() {
           replace: true,
           state: { 
             phone: phone,
-            message: "Account created successfully. Please verify your phone number."
+            message: "Account created successfully. Please check your phone for the 6-digit verification code."
           }
         });
       }
@@ -123,7 +124,7 @@ export function RegisterPage() {
           <div className="text-center mb-8">
             <span className="text-4xl">👕</span>
             <h1 className="text-2xl font-black text-dark mt-2">Create Account</h1>
-            <p className="text-gray-400 text-sm mt-1">Join the adidas family</p>
+            <p className="text-gray-400 text-sm mt-1">Join the BDFashions family</p>
           </div>
           {displayError && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-6">

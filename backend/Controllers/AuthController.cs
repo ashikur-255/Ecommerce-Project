@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using EcommerceAPI.Data;
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
@@ -307,6 +307,11 @@ public class AuthController : ControllerBase
 
             var phone = dto.Phone.Trim();
             var user = await _db.Users.FirstOrDefaultAsync(x => x.Phone == phone);
+            if (user == null)
+            {
+                var normalized = NormalizePhoneNumber(phone);
+                user = await _db.Users.FirstOrDefaultAsync(x => x.Phone == normalized);
+            }
 
             if (user == null)
                 return NotFound(ApiResponse<string>.Fail("User not found."));
@@ -658,6 +663,11 @@ public class AuthController : ControllerBase
 
                 var phone = dto.Phone.Trim();
                 var user = await _db.Users.FirstOrDefaultAsync(x => x.Phone == phone);
+                if (user == null)
+                {
+                    var normalized = NormalizePhoneNumber(phone);
+                    user = await _db.Users.FirstOrDefaultAsync(x => x.Phone == normalized);
+                }
 
                 if (user == null)
                     return NotFound(ApiResponse<string>.Fail("User not found."));
