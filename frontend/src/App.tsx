@@ -30,6 +30,8 @@ import HelpCenterPage from "./pages/HelpCenterPage";
 import ReturnPolicyPage from "./pages/ReturnPolicyPage";
 import ShippingInfoPage from "./pages/ShippingInfoPage";
 import FAQPage from "./pages/FAQPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
 
 
 
@@ -156,6 +158,8 @@ export default function App() {
             <Route path="/returns" element={<ReturnPolicyPage />} />
             <Route path="/shipping" element={<ShippingInfoPage />} />
             <Route path="/faq" element={<FAQPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsOfServicePage />} />
 
             <Route element={<ProtectedRoute adminOnly requireVerified />}>
               <Route path="/admin" element={<AdminPage />} />

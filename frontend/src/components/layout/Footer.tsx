@@ -56,6 +56,8 @@ const supportLinks = [
   { label: "Help Center", to: "/help" },
   { label: "Shipping Info", to: "/shipping" },
   { label: "Return Policy", to: "/returns" },
+  { label: "Privacy Policy", to: "/privacy" },
+  { label: "Terms of Service", to: "/terms" },
   { label: "FAQ", to: "/faq" },
 ];
 
@@ -362,11 +364,27 @@ export default function Footer() {
       <div className="relative border-t border-dark/15 bg-dark/[0.07]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:pr-20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs sm:text-sm font-medium text-dark/80 text-center md:text-left">
-              © {new Date().getFullYear()}{" "}
-              <span className="font-bold text-dark">BDFashions Store</span>. All
-              rights reserved.
-            </p>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1 text-xs sm:text-sm font-medium text-dark/80 text-center md:text-left">
+              <span>
+                © {new Date().getFullYear()}{" "}
+                <span className="font-bold text-dark">BDFashions Store</span>. All
+                rights reserved.
+              </span>
+              <span className="hidden sm:inline opacity-40">|</span>
+              <Link
+                to="/privacy"
+                className="hover:text-dark hover:underline font-semibold text-xs"
+              >
+                Privacy Policy
+              </Link>
+              <span className="opacity-40">|</span>
+              <Link
+                to="/terms"
+                className="hover:text-dark hover:underline font-semibold text-xs"
+              >
+                Terms of Service
+              </Link>
+            </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2.5">
               {socialLinks.map(({ icon: Icon, url, label }) => (
