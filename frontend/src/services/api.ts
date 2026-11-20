@@ -589,6 +589,12 @@ export const orderService = {
   cancelOrder: (id: number): Promise<AxiosResponse<ApiResponse<OrderResponse>>> =>
     api.put(`/orders/${id}/cancel`),
 
+  bookCourier: (id: number): Promise<AxiosResponse<ApiResponse<{ consignmentId: string; trackingCode: string; deliveryStatus: string }>>> =>
+    api.post(`/orders/${id}/book-courier`),
+
+  getCourierBalance: (): Promise<AxiosResponse<ApiResponse<{ configured: boolean; balance: number }>>> =>
+    api.get("/orders/courier-balance"),
+
   deleteMyOrder: (id: number): Promise<AxiosResponse<ApiResponse<null>>> =>
     api.delete(`/orders/${id}/my`),
 };

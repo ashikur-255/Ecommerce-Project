@@ -291,35 +291,7 @@ public class OrdersController : ControllerBase
         // ── Create Steadfast consignment the first time an order goes "shipped" (if configured) ──
         if (newStatus == "shipped" && string.IsNullOrEmpty(order.ConsignmentId))
         {
-            if (_steadfast.IsConfigured)
-            {
-                try
-                {
-                    var codAmount = order.PaymentMethod == "cashondelivery" ? order.TotalAmount : 0m;
-
-                    var result = await _steadfast.CreateOrderAsync(new SteadfastCreateOrderRequest
-                    {
-                        Invoice = $"ORD-{order.Id}",
-                        RecipientName = order.ShipFullName,
-                        RecipientPhone = order.ShipPhone,
-                        RecipientAddress = $"{order.ShipAddress}, {order.ShipCity}, {order.ShipPostalCode}",
-                        CodAmount = codAmount,
-                        Note = $"Order #{order.Id}"
-                    });
-
-                    if (result?.Consignment != null)
-                    {
-                        order.ConsignmentId = result.Consignment.ConsignmentId.ToString();
-                        order.TrackingCode = result.Consignment.TrackingCode;
-                        order.DeliveryStatus = result.Consignment.Status;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Steadfast courier booking failed for order #{OrderId}: {Message}. Continuing status update.", order.Id, ex.Message);
-                    // Do NOT fail the order status update if external courier is unavailable or unconfigured
-                }
-            }
+            await TryBookSteadfastCourier(order);
         }
 
         order.OrderStatus = newStatus;
@@ -338,6 +310,107 @@ public class OrdersController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok(ApiResponse<string>.Ok(order.OrderStatus, "Order status updated successfully."));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // POST /api/orders/{id}/book-courier  [Admin]
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPost("{id:int}/book-courier")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> BookCourier(int id)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        if (order is null)
+            return NotFound(ApiResponse<string>.Fail("Order not found."));
+
+        if (!string.IsNullOrEmpty(order.ConsignmentId))
+            return BadRequest(ApiResponse<string>.Fail($"Order already booked with consignment ID: {order.ConsignmentId}"));
+
+        if (!_steadfast.IsConfigured)
+            return BadRequest(ApiResponse<string>.Fail("Steadfast courier is not configured."));
+
+        var booked = await TryBookSteadfastCourier(order);
+        if (!booked)
+            return BadRequest(ApiResponse<string>.Fail("Failed to book order on Steadfast. Please verify customer phone and address."));
+
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(ApiResponse<object>.Ok(new
+        {
+            consignmentId = order.ConsignmentId,
+            trackingCode = order.TrackingCode,
+            deliveryStatus = order.DeliveryStatus
+        }, "Consignment booked successfully with Steadfast Courier."));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET /api/orders/courier-balance  [Admin]
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpGet("courier-balance")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetCourierBalance()
+    {
+        if (!_steadfast.IsConfigured)
+            return Ok(ApiResponse<object>.Ok(new { configured = false, balance = 0m }));
+
+        var bal = await _steadfast.GetBalanceAsync();
+        return Ok(ApiResponse<object>.Ok(new { configured = true, balance = bal ?? 0m }));
+    }
+
+    private async Task<bool> TryBookSteadfastCourier(Order order)
+    {
+        if (!_steadfast.IsConfigured || !string.IsNullOrEmpty(order.ConsignmentId))
+            return false;
+
+        try
+        {
+            var rawPhone = order.ShipPhone?.Trim() ?? "";
+            var digits = new string(rawPhone.Where(char.IsDigit).ToArray());
+            if (digits.StartsWith("880") && digits.Length >= 13)
+            {
+                digits = digits.Substring(2);
+            }
+            if (digits.Length == 10 && !digits.StartsWith("0"))
+            {
+                digits = "0" + digits;
+            }
+            var cleanPhone = !string.IsNullOrWhiteSpace(digits) ? digits : rawPhone;
+
+            var fullAddress = $"{order.ShipAddress}, {order.ShipCity}".Trim();
+            if (!string.IsNullOrWhiteSpace(order.ShipPostalCode))
+            {
+                fullAddress += $" - {order.ShipPostalCode}";
+            }
+
+            var codAmount = order.PaymentStatus == "paid" ? 0m : order.TotalAmount;
+
+            var result = await _steadfast.CreateOrderAsync(new SteadfastCreateOrderRequest
+            {
+                Invoice = $"ORD-{order.Id}",
+                RecipientName = order.ShipFullName,
+                RecipientPhone = cleanPhone,
+                RecipientAddress = fullAddress,
+                CodAmount = codAmount,
+                Note = $"Order #{order.Id} - BDFashions"
+            });
+
+            if (result?.Consignment != null)
+            {
+                order.ConsignmentId = result.Consignment.ConsignmentId.ToString();
+                order.TrackingCode = result.Consignment.TrackingCode;
+                order.DeliveryStatus = result.Consignment.Status ?? "in_review";
+                _logger.LogInformation("Successfully booked Steadfast parcel for order #{OrderId}. Consignment: {Cid}, Tracking: {TrackingCode}",
+                    order.Id, order.ConsignmentId, order.TrackingCode);
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Steadfast courier booking failed for order #{OrderId}: {Message}. Continuing status update.", order.Id, ex.Message);
+        }
+
+        return false;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

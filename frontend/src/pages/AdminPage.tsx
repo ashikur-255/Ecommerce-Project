@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import {
   FiPlus, FiEdit2, FiTrash2, FiX, FiShieldOff, FiSearch,
   FiShoppingBag, FiClock, FiCheckCircle, FiDollarSign,
-  FiUser, FiPhone, FiMapPin, FiPackage, FiChevronUp, FiChevronDown,
+  FiUser, FiPhone, FiMapPin, FiPackage, FiChevronUp, FiChevronDown, FiTruck,
 } from "react-icons/fi";
 import type { AxiosError } from "axios";
 import Swal from "sweetalert2";
@@ -72,6 +72,8 @@ const categoryFieldRef = useRef<HTMLDivElement>(null);
   // Pagination meta data for orders
   const [ordersTotal, setOrdersTotal] = useState(0);
   const [ordersTotalPages, setOrdersTotalPages] = useState(1);
+  const [courierBalance, setCourierBalance] = useState<number | null>(null);
+  const [bookingCourierId, setBookingCourierId] = useState<number | null>(null);
 
   const [allBrands, setAllBrands] = useState<string[]>([]);
 const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
@@ -131,31 +133,39 @@ useEffect(() => {
   return () => document.removeEventListener("mousedown", handleClickOutside);
 }, []);
 
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await orderService.getAll({
+        page: orderPage,
+        limit: ORDERS_PER_PAGE,
+      });
+      setOrders(res.data.data.orders as unknown as Order[]);
+      setOrdersTotal(res.data.data.total || 0);
+      setOrdersTotalPages(res.data.data.totalPages || 1);
+    } catch {
+      toast.error("Failed to load orders.");
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const fetchCourierBalance = async () => {
+    try {
+      const res = await orderService.getCourierBalance();
+      if (res.data?.data?.configured) {
+        setCourierBalance(res.data.data.balance);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   // Fetch orders with pagination
   useEffect(() => {
     if (tab !== "orders" || user?.role !== "admin") return;
-
-    let cancelled = false;
-    (async () => {
-      setOrdersLoading(true);
-      try {
-        const res = await orderService.getAll({
-          page: orderPage,
-          limit: ORDERS_PER_PAGE,
-        });
-        if (!cancelled) {
-          setOrders(res.data.data.orders as unknown as Order[]);
-          setOrdersTotal(res.data.data.total || 0);
-          setOrdersTotalPages(res.data.data.totalPages || 1);
-        }
-      } catch {
-        if (!cancelled) toast.error("Failed to load orders.");
-      } finally {
-        if (!cancelled) setOrdersLoading(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
+    fetchOrders();
+    fetchCourierBalance();
   }, [tab, user, orderPage]);
 
   // Filter products (client-side filtering)
@@ -336,15 +346,48 @@ useEffect(() => {
 
       const statusMessages: Record<OrderStatus, string> = {
         processing: "Order is now being processed.",
-        shipped: "Order has been shipped.",
+        shipped: "Order marked as shipped & booked with Steadfast! 🚚",
         delivered: "Order delivered and payment marked as paid ✅",
         cancelled: "Order has been cancelled.",
       };
 
       toast.success(statusMessages[status] || `Order status updated to ${status}.`);
+      fetchOrders();
+      fetchCourierBalance();
     } catch (err) {
       const error = err as AxiosError<{ message: string }>;
       toast.error(error.response?.data?.message ?? "Failed to update order status.");
+    }
+  };
+
+  const handleBookCourier = async (orderId: number) => {
+    setBookingCourierId(orderId);
+    try {
+      const res = await orderService.bookCourier(orderId);
+      const data = res.data?.data;
+      if (data) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  consignmentId: data.consignmentId,
+                  trackingCode: data.trackingCode,
+                  deliveryStatus: data.deliveryStatus,
+                  orderStatus: "shipped",
+                }
+              : o
+          )
+        );
+      }
+      toast.success("Order booked successfully with Steadfast Courier! 🚚");
+      fetchOrders();
+      fetchCourierBalance();
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+      toast.error(error.response?.data?.message ?? "Failed to book courier on Steadfast.");
+    } finally {
+      setBookingCourierId(null);
     }
   };
 
@@ -543,6 +586,37 @@ useEffect(() => {
         {/* ═══════════════════════ ORDERS ═══════════════════════ */}
         {tab === "orders" && (
           <div>
+            {courierBalance !== null && (
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 sm:p-4 bg-emerald-50 border border-emerald-200/70 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <FiTruck size={20} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Steadfast Courier Connected</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900">Active</span>
+                    </div>
+                    <p className="text-xs text-emerald-700">Automatic parcel booking enabled on shipped orders</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 self-end sm:self-center">
+                  <div className="text-right">
+                    <p className="text-[11px] text-emerald-600 font-medium">Steadfast Balance</p>
+                    <p className="text-base sm:text-lg font-black text-emerald-900">৳{courierBalance.toLocaleString()}</p>
+                  </div>
+                  <a
+                    href="https://steadfast.com.bd/user/api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition"
+                  >
+                    Portal ↗
+                  </a>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6">
               <StatCard label="Total Orders" value={ordersTotal || orders.length} icon={<FiShoppingBag />} color="blue" />
               <StatCard label="Processing" value={processingCount} icon={<FiClock />} color="yellow" />
@@ -757,13 +831,22 @@ useEffect(() => {
 
                               {/* Courier / Steadfast tracking */}
                               <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
-                                <h3 className="font-bold text-dark mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider text-gray-400">Courier</h3>
+                                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                                  <h3 className="font-bold text-dark text-xs sm:text-sm uppercase tracking-wider text-gray-400">Steadfast Courier</h3>
+                                  <FiTruck className="text-primary" size={16} />
+                                </div>
                                 {o.trackingCode ? (
                                   <div className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
                                     <div>
                                       <p className="text-gray-400 text-[11px]">Tracking Code</p>
-                                      <p className="font-mono font-semibold text-dark break-all">{o.trackingCode}</p>
+                                      <p className="font-mono font-bold text-dark text-sm sm:text-base break-all select-all">{o.trackingCode}</p>
                                     </div>
+                                    {o.consignmentId && (
+                                      <div>
+                                        <p className="text-gray-400 text-[11px]">Consignment ID</p>
+                                        <p className="font-mono text-xs text-gray-600">#{o.consignmentId}</p>
+                                      </div>
+                                    )}
                                     <div>
                                       <p className="text-gray-400 text-[11px]">Courier Status</p>
                                       <span className="inline-block mt-1 px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize bg-blue-50 text-blue-600">
@@ -774,17 +857,31 @@ useEffect(() => {
                                       href={`https://steadfast.com.bd/t/${o.trackingCode}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-block mt-1 text-primary text-xs font-semibold hover:underline"
+                                      className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition"
                                     >
-                                      Track on Steadfast →
+                                      <span>Track Live on Steadfast</span>
+                                      <span>↗</span>
                                     </a>
                                   </div>
                                 ) : (
-                                  <p className="text-gray-400 text-xs sm:text-sm">
-                                    {o.orderStatus === "processing"
-                                      ? "Consignment will be created once this order is marked as shipped."
-                                      : "No courier consignment linked to this order."}
-                                  </p>
+                                  <div className="space-y-3">
+                                    <p className="text-gray-400 text-xs leading-relaxed">
+                                      {o.orderStatus === "processing"
+                                        ? "Consignment is automatically created when order is marked as Shipped."
+                                        : "No courier consignment linked to this order yet."}
+                                    </p>
+                                    {o.orderStatus !== "cancelled" && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBookCourier(o.id)}
+                                        disabled={bookingCourierId === o.id}
+                                        className="w-full py-2 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                                      >
+                                        <FiTruck size={15} />
+                                        <span>{bookingCourierId === o.id ? "Booking with Steadfast..." : "Book with Steadfast Now"}</span>
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>

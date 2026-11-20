@@ -33,8 +33,12 @@ public class SteadfastCourierService
         if (IsConfigured)
         {
             _http.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
+            _http.DefaultRequestHeaders.Remove("Api-Key");
             _http.DefaultRequestHeaders.Add("Api-Key", _options.ApiKey);
+            _http.DefaultRequestHeaders.Remove("Secret-Key");
             _http.DefaultRequestHeaders.Add("Secret-Key", _options.SecretKey);
+            _http.DefaultRequestHeaders.Accept.Clear();
+            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
     }
 
@@ -67,8 +71,11 @@ public class SteadfastCourierService
         var parsed = JsonSerializer.Deserialize<SteadfastRawResponse>(body,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-        if (parsed?.Consignment is null)
-            throw new ApplicationException($"Steadfast returned no consignment: {body}");
+        if (parsed == null || parsed.Status != 200 || parsed.Consignment is null)
+        {
+            var msg = parsed?.Message ?? body;
+            throw new ApplicationException($"Steadfast returned error: {msg}");
+        }
 
         return new SteadfastCreateOrderResponse
         {
@@ -84,11 +91,40 @@ public class SteadfastCourierService
         };
     }
 
+    public async Task<decimal?> GetBalanceAsync()
+    {
+        if (!IsConfigured) return null;
+        try
+        {
+            var res = await _http.GetAsync("get_balance");
+            if (!res.IsSuccessStatusCode) return null;
+            var body = await res.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("current_balance", out var balProp))
+            {
+                if (balProp.TryGetDecimal(out var bal)) return bal;
+            }
+        }
+        catch
+        {
+            // Ignore balance check failure
+        }
+        return null;
+    }
+
     public bool IsValidWebhookToken(string? bearerHeader)
     {
-        // Header comes in as "Bearer <token>"
-        var expected = $"Bearer {_options.WebhookToken}";
-        return !string.IsNullOrEmpty(bearerHeader) && bearerHeader == expected;
+        if (string.IsNullOrWhiteSpace(_options.WebhookToken))
+            return true;
+
+        if (string.IsNullOrWhiteSpace(bearerHeader))
+            return false;
+
+        var token = bearerHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+            ? bearerHeader.Substring(7).Trim()
+            : bearerHeader.Trim();
+
+        return string.Equals(token, _options.WebhookToken.Trim(), StringComparison.Ordinal);
     }
 
     // ── Internal shape matching Steadfast's raw snake_case JSON ───────────
