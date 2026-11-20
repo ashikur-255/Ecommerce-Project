@@ -284,7 +284,7 @@ export const login = createAsyncThunk<
  * Register new user
  */
 export const register = createAsyncThunk<
-  { message: string },
+  AuthData,
   RegisterDto,
   { rejectValue: string }
 >("auth/register", async (userData, { rejectWithValue }) => {
@@ -300,16 +300,20 @@ export const register = createAsyncThunk<
       return rejectWithValue("Please provide either email or phone number.");
     }
 
-    const response = await api.post<ApiResponse<{ message: string }>>(
+    const response = await api.post<ApiResponse<AuthData>>(
       "/auth/register",
       userData
     );
 
     // Handle response properly
-    if (response.data.success) {
-      return {
-        message: response.data.message || "Registration successful. Please check your email for verification.",
-      };
+    if (response.data.success && response.data.data) {
+      const authData = response.data.data;
+      if (authData.token) {
+        storage.setToken(authData.token);
+        storage.setUser(authData.user);
+        api.defaults.headers.common["Authorization"] = `Bearer ${authData.token}`;
+      }
+      return authData;
     } else {
       return rejectWithValue(response.data.message || "Registration failed.");
     }
@@ -317,7 +321,6 @@ export const register = createAsyncThunk<
     if (axios.isAxiosError(error)) {
       const data = error.response?.data as ErrorResponse;
       if (data?.message) {
-        // Handle specific error messages from backend
         if (data.message.includes("Email already exists")) {
           return rejectWithValue("This email is already registered. Please login.");
         }
@@ -327,6 +330,38 @@ export const register = createAsyncThunk<
         return rejectWithValue(data.message);
       }
     }
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
+
+/**
+ * Google Login
+ */
+export interface GoogleAuthDto {
+  credential?: string;
+  idToken?: string;
+  accessToken?: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+}
+
+export const googleLogin = createAsyncThunk<
+  AuthData,
+  GoogleAuthDto,
+  { rejectValue: string }
+>("auth/googleLogin", async (data, { rejectWithValue }) => {
+  try {
+    const response = await api.post<ApiResponse<AuthData>>("/auth/google", data);
+    if (!response.data.success) {
+      return rejectWithValue(response.data.message || "Google login failed.");
+    }
+    const authData = response.data.data;
+    storage.setToken(authData.token);
+    storage.setUser(authData.user);
+    api.defaults.headers.common["Authorization"] = `Bearer ${authData.token}`;
+    return authData;
+  } catch (error) {
     return rejectWithValue(getErrorMessage(error));
   }
 });
@@ -678,18 +713,37 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state) => {
+      .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        // Don't auto-login after registration
-        state.user = null;
-        state.token = null;
-        state.isAuthenticated = false;
-        storage.clearAll();
+        if (action.payload?.token) {
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.isAuthenticated = true;
+        }
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Registration failed";
+      })
+
+      // ============================================================
+      // GOOGLE LOGIN
+      // ============================================================
+      .addCase(googleLogin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Google login failed";
       })
 
       // ============================================================

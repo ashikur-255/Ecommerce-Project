@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({
   adminOnly = false,
-  requireVerified = false,
 }: ProtectedRouteProps) {
   const { user, token } = useAppSelector((s) => s.auth);
 
@@ -20,15 +19,6 @@ export default function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  if (requireVerified) {
-    const hasEmail = user.email && !user.isEmailVerified;
-    const hasPhone = user.phone && !user.isPhoneVerified;
-    if (hasEmail) {
-      return <Navigate to="/verify-email" replace />;
-    } else if (hasPhone) {
-      return <Navigate to="/verify-phone" replace />;
-    }
-  }
-
+  // Verification is completely disabled, user has direct access
   return <Outlet />;
 }

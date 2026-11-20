@@ -25,6 +25,7 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly ISmsService _smsService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public AuthController(
         AppDbContext db,
@@ -33,7 +34,8 @@ public class AuthController : ControllerBase
         IConfiguration configuration,
         IEmailService emailService,
         ISmsService smsService,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _db = db;
         _jwt = jwt;
@@ -42,6 +44,7 @@ public class AuthController : ControllerBase
         _emailService = emailService;
         _smsService = smsService;
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     [HttpPost("register")]
@@ -89,83 +92,19 @@ public class AuthController : ControllerBase
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = "customer",
                 CreatedAt = DateTime.UtcNow,
-                IsEmailVerified = false,
-                IsPhoneVerified = false
+                IsEmailVerified = true, // ✅ Verification disabled: accounts immediately active
+                IsPhoneVerified = true  // ✅ Verification disabled: accounts immediately active
             };
-
-            // Generate email verification token ONLY IF email provided
-            if (!string.IsNullOrWhiteSpace(user.Email))
-            {
-                var verificationToken = GenerateToken();
-                user.EmailVerificationToken = verificationToken;
-                user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
-            }
-            else
-            {
-                // ✅ If no email, set email verification to true (not applicable)
-                user.IsEmailVerified = true;
-            }
-
-            // If phone provided, generate OTP
-            if (!string.IsNullOrWhiteSpace(user.Phone))
-            {
-                var otp = Random.Shared.Next(100000, 999999).ToString();
-                user.PhoneVerificationCode = otp;
-                user.PhoneVerificationCodeExpiry = DateTime.UtcNow.AddMinutes(10);
-            }
 
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
-            var frontendUrl = _configuration["Cors:AllowedOrigins:0"] ?? "http://localhost:5173";
-
-            // Send email verification if email provided
-            if (!string.IsNullOrWhiteSpace(user.Email) && user.EmailVerificationToken != null)
-            {
-                try
-                {
-                    var verifyLink = $"{frontendUrl}/verify-email?token={user.EmailVerificationToken}";
-                    var html = EmailTemplates.VerificationEmail(user.Name, verifyLink);
-                    await _emailService.SendEmailAsync(user.Email, "Verify your Email Address", html);
-                    _logger.LogInformation($"Verification email sent to {user.Email}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Failed to send verification email to {user.Email}");
-                }
-            }
-
-            // Send phone verification if phone provided
-            if (!string.IsNullOrWhiteSpace(user.Phone))
-            {
-                try
-                {
-                    var sent = await _smsService.SendOtpAsync(user.Phone, user.PhoneVerificationCode!);
-                    if (!sent)
-                    {
-                        _logger.LogWarning($"Failed to send SMS to {user.Phone}");
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Verification SMS sent to {user.Phone}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Failed to send verification SMS to {user.Phone}");
-                }
-            }
-
-            var message = "Registration successful. ";
-            if (!string.IsNullOrWhiteSpace(user.Email))
-                message += "Please check your email for verification. ";
-            if (!string.IsNullOrWhiteSpace(user.Phone))
-                message += "A verification code has been sent to your phone. ";
+            _logger.LogInformation($"New user registered directly without verification barriers: {user.Email ?? user.Phone}");
 
             return Ok(
                 ApiResponse<AuthResponseDto>.Ok(
                     BuildAuthResponse(user),
-                    message.Trim()
+                    "Registration successful! Welcome to BDFashions."
                 )
             );
         }
@@ -266,18 +205,12 @@ public class AuthController : ControllerBase
                 return StatusCode(500, ApiResponse<string>.Fail("An error occurred during login."));
             }
 
-            // ✅ FIXED: Check email verification ONLY IF the user has an email AND logging in with email
-            if (!string.IsNullOrWhiteSpace(dto.Email) && !string.IsNullOrWhiteSpace(user.Email) && !user.IsEmailVerified)
+            // ✅ Verification disabled: auto-verify any accounts so users can log in immediately without barriers
+            if (!user.IsEmailVerified || !user.IsPhoneVerified)
             {
-                _logger.LogWarning($"Unverified email login attempt: {user.Email}");
-                return Unauthorized(ApiResponse<string>.Fail("Please verify your email before logging in."));
-            }
-
-            // ✅ FIXED: Check phone verification ONLY IF the user has a phone AND logging in with phone
-            if (!string.IsNullOrWhiteSpace(dto.Phone) && !string.IsNullOrWhiteSpace(user.Phone) && !user.IsPhoneVerified)
-            {
-                _logger.LogWarning($"Unverified phone login attempt: {user.Phone}");
-                return Unauthorized(ApiResponse<string>.Fail("Please verify your phone number before logging in."));
+                user.IsEmailVerified = true;
+                user.IsPhoneVerified = true;
+                await _db.SaveChangesAsync();
             }
 
             _logger.LogInformation($"Login successful for: {user.Email ?? user.Phone}");
@@ -287,6 +220,132 @@ public class AuthController : ControllerBase
         {
             _logger.LogError(ex, "Login error");
             return StatusCode(500, ApiResponse<string>.Fail($"An error occurred during login: {ex.Message}"));
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // POST: api/auth/google
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPost("google")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthDto dto)
+    {
+        try
+        {
+            string? email = dto.Email;
+            string? name = dto.Name;
+            string? picture = dto.Picture;
+
+            // If an ID token / credential is provided, verify with Google TokenInfo API
+            var token = !string.IsNullOrWhiteSpace(dto.Credential) ? dto.Credential : dto.IdToken;
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                try
+                {
+                    var httpClient = _httpClientFactory.CreateClient();
+                    var verifyUrl = $"https://oauth2.googleapis.com/tokeninfo?id_token={token}";
+                    var response = await httpClient.GetAsync(verifyUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync();
+                        using var doc = System.Text.Json.JsonDocument.Parse(json);
+                        var root = doc.RootElement;
+
+                        if (root.TryGetProperty("email", out var emailProp))
+                            email = emailProp.GetString();
+
+                        if (root.TryGetProperty("name", out var nameProp))
+                            name = nameProp.GetString();
+
+                        if (root.TryGetProperty("picture", out var pictureProp))
+                            picture = pictureProp.GetString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error verifying Google token with Google APIs");
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(dto.AccessToken))
+            {
+                try
+                {
+                    var httpClient = _httpClientFactory.CreateClient();
+                    var userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+                    var userReq = new HttpRequestMessage(HttpMethod.Get, userInfoUrl);
+                    userReq.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", dto.AccessToken);
+                    var userRes = await httpClient.SendAsync(userReq);
+                    if (userRes.IsSuccessStatusCode)
+                    {
+                        var userJson = await userRes.Content.ReadAsStringAsync();
+                        using var doc = System.Text.Json.JsonDocument.Parse(userJson);
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("email", out var emailProp))
+                            email = emailProp.GetString();
+                        if (root.TryGetProperty("name", out var nameProp))
+                            name = nameProp.GetString();
+                        if (root.TryGetProperty("picture", out var pictureProp))
+                            picture = pictureProp.GetString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error fetching Google user info with access token");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return BadRequest(ApiResponse<string>.Fail("Could not verify Google account details."));
+            }
+
+            var emailLower = email.Trim().ToLowerInvariant();
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == emailLower);
+
+            if (user == null)
+            {
+                // Create new user account for Google sign in
+                user = new User
+                {
+                    Name = !string.IsNullOrWhiteSpace(name) ? name.Trim() : emailLower.Split('@')[0],
+                    Email = emailLower,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
+                    Role = "customer",
+                    Avatar = picture,
+                    IsEmailVerified = true,
+                    IsPhoneVerified = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Users.Add(user);
+                await _db.SaveChangesAsync();
+                _logger.LogInformation($"Created new user via Google Login: {emailLower}");
+            }
+            else
+            {
+                // Existing user: ensure verified and update avatar/name if missing
+                bool updated = false;
+                if (!user.IsEmailVerified) { user.IsEmailVerified = true; updated = true; }
+                if (!user.IsPhoneVerified) { user.IsPhoneVerified = true; updated = true; }
+                if (string.IsNullOrWhiteSpace(user.Avatar) && !string.IsNullOrWhiteSpace(picture))
+                {
+                    user.Avatar = picture;
+                    updated = true;
+                }
+                if (updated)
+                {
+                    await _db.SaveChangesAsync();
+                }
+                _logger.LogInformation($"Existing user logged in via Google: {emailLower}");
+            }
+
+            return Ok(ApiResponse<AuthResponseDto>.Ok(BuildAuthResponse(user), "Google login successful."));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Google login error");
+            return StatusCode(500, ApiResponse<string>.Fail("An error occurred during Google login."));
         }
     }
 

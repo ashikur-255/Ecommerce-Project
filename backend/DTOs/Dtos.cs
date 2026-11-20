@@ -62,6 +62,15 @@ public class VerifyPhoneDto
     public string Code { get; set; } = string.Empty;
 }
 
+public class GoogleAuthDto
+{
+    public string? Credential { get; set; }
+    public string? IdToken { get; set; }
+    public string? AccessToken { get; set; }
+    public string? Email { get; set; }
+    public string? Name { get; set; }
+    public string? Picture { get; set; }
+}
 
 public class UpdateProfileDto
 {
