@@ -1,4 +1,4 @@
-﻿using EcommerceAPI.Data;
+using EcommerceAPI.Data;
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
 using EcommerceAPI.Services;

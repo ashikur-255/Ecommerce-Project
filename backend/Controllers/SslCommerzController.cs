@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using EcommerceAPI.Data;
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
