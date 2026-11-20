@@ -52,6 +52,14 @@ public class SslCommerzController : ControllerBase
         if (!dto.OrderItems.Any())
             return BadRequest(ApiResponse<string>.Fail("Order must have at least one item."));
 
+        var storeId = _config["SSLCommerz:StoreId"] ?? Environment.GetEnvironmentVariable("SSLCommerz__StoreId");
+        var storePasswd = _config["SSLCommerz:StorePasswd"] ?? Environment.GetEnvironmentVariable("SSLCommerz__StorePasswd");
+
+        if (string.IsNullOrWhiteSpace(storeId) || string.IsNullOrWhiteSpace(storePasswd) || storeId == "your_store_id")
+        {
+            return BadRequest(ApiResponse<string>.Fail("SSLCommerz gateway is currently being configured. Please choose Cash on Delivery to place your order immediately."));
+        }
+
         decimal subTotal = 0;
         var orderItems = new List<OrderItem>();
 

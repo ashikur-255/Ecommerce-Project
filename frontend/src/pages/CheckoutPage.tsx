@@ -1,38 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import { FiCheckCircle, FiShoppingBag } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { fetchCart } from "../store/slices/cartSlice";
 import { createOrder } from "../store/slices/orderSlice";
-import { paymentService } from "../services/api";
 import CheckoutPaymentForm from "../components/Cart/Checkoutpaymentform";
 import Button from "../components/ui/Button";
 import toast from "react-hot-toast";
 import type { AxiosError } from "axios";
 import { getImageUrl, getProductImageUrl, handleImageError } from "../utils/image";
-
-// Stripe publishable key comes back from our backend's create-intent response,
-// but we also keep a fallback from .env so Elements can mount immediately.
-const stripePromises = new Map<string, ReturnType<typeof loadStripe>>();
-
-function getStripe(publishableKey: string) {
-  if (!stripePromises.has(publishableKey)) {
-    stripePromises.set(
-      publishableKey,
-      loadStripe(publishableKey, {
-        developerTools: {
-          assistant: {
-            enabled: false,
-          },
-        },
-      })
-    );
-  }
-
-  return stripePromises.get(publishableKey)!;
-}
 
 type Step = "address" | "payment" | "success";
 
@@ -43,11 +19,6 @@ export default function CheckoutPage() {
   const { order } = useAppSelector((s) => s.orders);
 
   const [step, setStep] = useState<Step>("address");
-  const [clientSecret, setClientSecret] = useState("");
-  const [publishableKey, setPublishableKey] = useState(
-    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
-  );
-  const [creatingIntent, setCreatingIntent] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
 
   const [address, setAddress] = useState({
@@ -103,31 +74,15 @@ export default function CheckoutPage() {
     [items]
   );
 
-  // ── Step 1 → Step 2: validate address, then create the Stripe PaymentIntent
-  const handleAddressSubmit = async (e: React.FormEvent) => {
+  // ── Step 1 → Step 2: validate address and proceed to payment
+  const handleAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (Object.values(address).some((v) => !v.trim())) {
       toast.error("Please fill in all shipping fields.");
       return;
     }
 
-    setCreatingIntent(true);
-
-    try {
-      const res = await paymentService.createIntent({
-        amount: grandTotal,
-        currency: "usd",
-      });
-
-      setClientSecret(res.data.data.clientSecret);
-      setPublishableKey(res.data.data.publishableKey || publishableKey);
-      setStep("payment");
-    } catch (err: unknown) {
-      const error = err as AxiosError<{ message: string }>;
-      toast.error(error.response?.data?.message ?? "Could not initialize payment.");
-    } finally {
-      setCreatingIntent(false);
-    }
+    setStep("payment");
   };
 
   // ── After Stripe confirms payment, create the order in our DB ──────────────
@@ -145,7 +100,6 @@ export default function CheckoutPage() {
       ).unwrap();
 
       await dispatch(fetchCart());
-      setClientSecret("");
       setStep("success");
     } catch (err: unknown) {
       let message = "Order could not be saved. Contact support with your payment ID.";
@@ -179,7 +133,6 @@ export default function CheckoutPage() {
       ).unwrap();
 
       await dispatch(fetchCart());
-      setClientSecret("");
       toast.success("Order placed successfully!");
       setStep("success");
     } catch (err: unknown) {
@@ -386,28 +339,23 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <Button type="submit" size="lg" className="w-full mt-4" loading={creatingIntent}>
+                <Button type="submit" size="lg" className="w-full mt-4">
                   Continue to Payment
                 </Button>
               </form>
             )}
 
-            {step === "payment" && clientSecret && publishableKey && (
+            {step === "payment" && (
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <h2 className="font-black text-dark text-lg mb-4">Payment Details</h2>
-                <Elements
-                  stripe={getStripe(publishableKey)}
-                  options={{ clientSecret, appearance: { theme: "stripe", variables: { colorPrimary: "#fda702" } } }}
-                >
-                  <CheckoutPaymentForm
-                    amount={grandTotal}
-                    orderItems={orderItemsPayload}
-                    shippingAddress={address}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    onCashOnDelivery={handleCashOnDelivery}
-                    disabled={placingOrder}
-                  />
-                </Elements>
+                <CheckoutPaymentForm
+                  amount={grandTotal}
+                  orderItems={orderItemsPayload}
+                  shippingAddress={address}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onCashOnDelivery={handleCashOnDelivery}
+                  disabled={placingOrder}
+                />
                 <button
                   onClick={() => setStep("address")}
                   className="text-sm text-gray-400 hover:text-dark mt-4 transition-colors"

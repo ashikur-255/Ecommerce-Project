@@ -1,10 +1,30 @@
-import { useState } from "react";
-import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
-import { FiCreditCard, FiTruck, FiSmartphone, FiGlobe } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
+import { FiCreditCard, FiTruck, FiSmartphone, FiGlobe, FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
 import Button from "../ui/Button";
 import toast from "react-hot-toast";
 import type { AxiosError } from "axios";
 import { paymentService, sslcommerzService } from "../../services/api";
+
+const stripePromises = new Map<string, ReturnType<typeof loadStripe>>();
+
+export function getStripe(publishableKey: string) {
+  if (!stripePromises.has(publishableKey)) {
+    stripePromises.set(
+      publishableKey,
+      loadStripe(publishableKey, {
+        developerTools: {
+          assistant: {
+            enabled: false,
+          },
+        },
+      })
+    );
+  }
+
+  return stripePromises.get(publishableKey)!;
+}
 
 interface OrderItemInput {
   productId: number;
@@ -23,19 +43,16 @@ interface ShippingAddressInput {
 }
 
 interface Props {
-  amount: number; // order total — needed by bKash/Nagad/Rocket
-  orderItems: OrderItemInput[]; // needed by SSLCommerz, which creates the order up front
-  shippingAddress: ShippingAddressInput; // same
+  amount: number;
+  orderItems: OrderItemInput[];
+  shippingAddress: ShippingAddressInput;
   onPaymentSuccess: (paymentIntentId: string) => void;
   onCashOnDelivery: () => Promise<void>;
   disabled?: boolean;
 }
 
-type PaymentMethod = "stripe" | "cod" | "bkash" | "sslcommerz"; // add "nagad" | "rocket" here later
+type PaymentMethod = "cod" | "sslcommerz" | "bkash" | "stripe";
 
-// ── Wallet-based (redirect) providers whose create call only needs `amount` ──
-// bKash today; Nagad/Rocket slot in the same way later — one array entry,
-// one WALLET_CREATE_FN entry, one backend controller. Nothing else changes.
 const WALLET_PROVIDERS: {
   id: "bkash";
   label: string;
@@ -45,33 +62,27 @@ const WALLET_PROVIDERS: {
 }[] = [
   {
     id: "bkash",
-    label: "bKash",
+    label: "bKash Direct",
     description: "Pay instantly with your bKash account",
-    activeClasses: "border-pink-600 bg-pink-50",
-    idleClasses: "border-gray-300 hover:border-pink-600",
+    activeClasses: "border-pink-600 bg-pink-50 ring-2 ring-pink-500/20",
+    idleClasses: "border-gray-200 hover:border-pink-500 bg-white",
   },
-  // { id: "nagad", label: "Nagad", description: "Pay with Nagad", activeClasses: "...", idleClasses: "..." },
-  // { id: "rocket", label: "Rocket", description: "Pay with Rocket", activeClasses: "...", idleClasses: "..." },
 ];
 
 const WALLET_CREATE_FN: Record<string, (amount: number) => Promise<{ data: { data: { redirectUrl: string } } }>> = {
   bkash: (amount) => paymentService.createBkashPayment({ amount }),
-  // nagad: (amount) => paymentService.createNagadPayment({ amount }),
-  // rocket: (amount) => paymentService.createRocketPayment({ amount }),
 };
 
-export default function CheckoutPaymentForm({
-  amount,
-  orderItems,
-  shippingAddress,
+// ── Inner Stripe Form mounted only when Stripe Elements is active ──
+function StripeCardInnerForm({
   onPaymentSuccess,
-  onCashOnDelivery,
   disabled,
-}: Props) {
+}: {
+  onPaymentSuccess: (paymentIntentId: string) => void;
+  disabled?: boolean;
+}) {
   const stripe = useStripe();
   const elements = useElements();
-
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
   const [submitting, setSubmitting] = useState(false);
 
   const handleStripePayment = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -97,11 +108,86 @@ export default function CheckoutPaymentForm({
         toast.error("Payment was not completed.");
       }
     } catch {
-      toast.error("Something went wrong.");
+      toast.error("Something went wrong during card processing.");
     } finally {
       setSubmitting(false);
     }
   };
+
+  return (
+    <form onSubmit={handleStripePayment} className="space-y-5">
+      <PaymentElement
+        options={{
+          layout: { type: "tabs", defaultCollapsed: false },
+          paymentMethodOrder: ["card"],
+        }}
+      />
+
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        loading={submitting}
+        disabled={disabled || !stripe || !elements}
+      >
+        Pay With Card Now
+      </Button>
+
+      <p className="text-xs text-gray-400 text-center">
+        🔒 Payments are securely processed by Stripe. Your card details are never stored on our servers.
+      </p>
+    </form>
+  );
+}
+
+export default function CheckoutPaymentForm({
+  amount,
+  orderItems,
+  shippingAddress,
+  onPaymentSuccess,
+  onCashOnDelivery,
+  disabled,
+}: Props) {
+  // Default to Cash on Delivery for frictionless checkout
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Stripe state
+  const [stripeClientSecret, setStripeClientSecret] = useState("");
+  const [stripePublishableKey, setStripePublishableKey] = useState(
+    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
+  );
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+
+  const initStripe = async () => {
+    setStripeLoading(true);
+    setStripeError(null);
+    try {
+      const res = await paymentService.createIntent({
+        amount,
+        currency: "usd",
+      });
+      setStripeClientSecret(res.data.data.clientSecret);
+      if (res.data.data.publishableKey) {
+        setStripePublishableKey(res.data.data.publishableKey);
+      }
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      const msg =
+        error.response?.data?.message ||
+        "Stripe payment gateway is not configured on this server yet.";
+      setStripeError(msg);
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (paymentMethod === "stripe" && !stripeClientSecret && !stripeLoading && !stripeError) {
+      initStripe();
+    }
+  }, [paymentMethod, stripeClientSecret, stripeLoading, stripeError]);
 
   const handleCOD = async () => {
     setSubmitting(true);
@@ -114,8 +200,6 @@ export default function CheckoutPaymentForm({
     }
   };
 
-  // Shared error-surfacing for both redirect-based flows below — shows the
-  // real backend message instead of a generic one, and logs full detail.
   const showBackendError = (err: unknown, fallback: string, logLabel: string) => {
     const error = err as AxiosError<{ message: string }>;
     const backendMessage = error.response?.data?.message;
@@ -128,10 +212,6 @@ export default function CheckoutPaymentForm({
     console.error(logLabel, error.response?.data ?? error.message);
   };
 
-  // bKash today, Nagad/Rocket later — amount-only create call. The order
-  // itself gets created client-side on PaymentResultPage after the redirect
-  // back, which is why we stash cart/address in sessionStorage first: the
-  // full-page redirect to bKash's site wipes this component's state.
   const handleWalletPayment = async (providerId: string) => {
     const pendingCheckout = sessionStorage.getItem("pendingCheckout");
     if (!pendingCheckout) {
@@ -145,22 +225,23 @@ export default function CheckoutPaymentForm({
       const res = await createFn(amount);
       window.location.assign(res.data.data.redirectUrl);
     } catch (err) {
-      showBackendError(err, "Failed to start payment. Please try again.", "bKash create-payment failed:");
+      showBackendError(err, "Failed to start bKash payment. Please try again.", "bKash create-payment failed:");
       setSubmitting(false);
     }
   };
 
-  // SSLCommerz — a different flow entirely: the backend creates the Order
-  // right now (before the redirect), since SSLCommerz's success/fail/cancel
-  // callbacks land on the API directly, never on this SPA. Nothing to stash
-  // in sessionStorage, and nothing for PaymentResultPage to create afterward.
   const handleSslCommerzPayment = async () => {
     setSubmitting(true);
     try {
       const res = await sslcommerzService.createPayment({ orderItems, shippingAddress });
-      window.location.assign(res.data.data.gatewayPageUrl);
+      if (res.data?.data?.gatewayPageUrl) {
+        window.location.assign(res.data.data.gatewayPageUrl);
+      } else {
+        toast.error("SSLCommerz did not return a valid gateway URL.");
+        setSubmitting(false);
+      }
     } catch (err) {
-      showBackendError(err, "Failed to start payment. Please try again.", "SSLCommerz create-payment failed:");
+      showBackendError(err, "SSLCommerz payment is currently being configured. Please use Cash on Delivery.", "SSLCommerz create-payment failed:");
       setSubmitting(false);
     }
   };
@@ -169,177 +250,213 @@ export default function CheckoutPaymentForm({
     <div className="space-y-6">
       {/* Payment Method Selector */}
       <div className="space-y-3">
-        <h3 className="font-semibold text-lg">Select Payment Method</h3>
+        <h3 className="font-semibold text-lg text-dark">Select Payment Method</h3>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {/* Stripe */}
-          <button
-            type="button"
-            onClick={() => setPaymentMethod("stripe")}
-            className={`border rounded-xl p-4 transition-all flex items-center gap-3 ${
-              paymentMethod === "stripe"
-                ? "border-primary bg-primary/10"
-                : "border-gray-300 hover:border-primary"
-            }`}
-          >
-            <FiCreditCard size={20} />
-            <div className="text-left">
-              <h4 className="font-medium">Credit / Debit Card</h4>
-              <p className="text-sm text-gray-500">Secure payment with Stripe</p>
-            </div>
-          </button>
-
-          {/* Cash on Delivery */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {/* Cash on Delivery (COD) */}
           <button
             type="button"
             onClick={() => setPaymentMethod("cod")}
-            className={`border rounded-xl p-4 transition-all flex items-center gap-3 ${
+            className={`border rounded-2xl p-4 transition-all flex items-center gap-3 text-left ${
               paymentMethod === "cod"
-                ? "border-green-600 bg-green-50"
-                : "border-gray-300 hover:border-green-600"
+                ? "border-emerald-500 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-500/20"
+                : "border-gray-200 hover:border-emerald-400 bg-white"
             }`}
           >
-            <FiTruck size={20} />
-            <div className="text-left">
-              <h4 className="font-medium">Cash on Delivery</h4>
-              <p className="text-sm text-gray-500">Pay when your order arrives</p>
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <FiTruck size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="font-bold text-dark text-sm">Cash on Delivery</h4>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                  Recommended
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Pay in cash when parcel arrives at your door</p>
             </div>
           </button>
 
-          {/* Wallet providers — bKash today, Nagad/Rocket slot in automatically */}
+          {/* SSLCommerz (Cards, bKash, Nagad, Internet Banking) */}
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("sslcommerz")}
+            className={`border rounded-2xl p-4 transition-all flex items-center gap-3 text-left ${
+              paymentMethod === "sslcommerz"
+                ? "border-blue-500 bg-blue-50/70 shadow-sm ring-2 ring-blue-500/20"
+                : "border-gray-200 hover:border-blue-400 bg-white"
+            }`}
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <FiGlobe size={20} />
+            </div>
+            <div>
+              <h4 className="font-bold text-dark text-sm">Card / Mobile Banking</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Visa, Mastercard, bKash, Nagad via SSLCommerz</p>
+            </div>
+          </button>
+
+          {/* bKash Direct */}
           {WALLET_PROVIDERS.map((wallet) => (
             <button
               key={wallet.id}
               type="button"
               onClick={() => setPaymentMethod(wallet.id)}
-              className={`border rounded-xl p-4 transition-all flex items-center gap-3 ${
+              className={`border rounded-2xl p-4 transition-all flex items-center gap-3 text-left ${
                 paymentMethod === wallet.id ? wallet.activeClasses : wallet.idleClasses
               }`}
             >
-              <FiSmartphone size={20} />
-              <div className="text-left">
-                <h4 className="font-medium">{wallet.label}</h4>
-                <p className="text-sm text-gray-500">{wallet.description}</p>
+              <div className="w-10 h-10 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center shrink-0">
+                <FiSmartphone size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-dark text-sm">{wallet.label}</h4>
+                <p className="text-xs text-gray-500 mt-0.5">{wallet.description}</p>
               </div>
             </button>
           ))}
 
-          {/* SSLCommerz */}
+          {/* Stripe International Card */}
           <button
             type="button"
-            onClick={() => setPaymentMethod("sslcommerz")}
-            className={`border rounded-xl p-4 transition-all flex items-center gap-3 ${
-              paymentMethod === "sslcommerz"
-                ? "border-blue-600 bg-blue-50"
-                : "border-gray-300 hover:border-blue-600"
+            onClick={() => setPaymentMethod("stripe")}
+            className={`border rounded-2xl p-4 transition-all flex items-center gap-3 text-left ${
+              paymentMethod === "stripe"
+                ? "border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/20"
+                : "border-gray-200 hover:border-amber-400 bg-white"
             }`}
           >
-            <FiGlobe size={20} />
-            <div className="text-left">
-              <h4 className="font-medium">Card / Mobile Banking</h4>
-              <p className="text-sm text-gray-500">Visa, Mastercard, bKash, Nagad & more via SSLCommerz</p>
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <FiCreditCard size={20} />
+            </div>
+            <div>
+              <h4 className="font-bold text-dark text-sm">International Cards</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Secure payment with Stripe</p>
             </div>
           </button>
         </div>
       </div>
 
-      {/* Stripe Payment Form */}
-      {paymentMethod === "stripe" && (
-        <form onSubmit={handleStripePayment} className="space-y-5">
-          <PaymentElement
-            options={{
-              layout: { type: "tabs", defaultCollapsed: false },
-              paymentMethodOrder: ["card"],
-            }}
-          />
-
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            loading={submitting}
-            disabled={disabled || !stripe || !elements}
-          >
-            Pay Now
-          </Button>
-
-          <p className="text-xs text-gray-400 text-center">
-            🔒 Payments are securely processed by Stripe. Your card details are never
-            stored on our servers.
-          </p>
-        </form>
-      )}
-
-      {/* Cash on Delivery */}
+      {/* ── Cash on Delivery Panel ── */}
       {paymentMethod === "cod" && (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-            <h4 className="font-semibold text-green-700">Cash on Delivery</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              You will pay in cash when your order is delivered to your address.
-            </p>
+        <div className="space-y-4 animate-fade-in">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5">
+            <div className="flex items-start gap-3">
+              <FiCheckCircle className="text-emerald-600 mt-0.5 shrink-0" size={18} />
+              <div>
+                <h4 className="font-bold text-emerald-900 text-sm">Cash on Delivery Selected</h4>
+                <p className="text-xs text-emerald-800/80 mt-1 leading-relaxed">
+                  You can inspect the product parcel upon arrival and pay cash directly to the delivery rider. No online payment required!
+                </p>
+              </div>
+            </div>
           </div>
 
           <Button
             type="button"
             size="lg"
-            className="w-full bg-green-600 hover:bg-green-700"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 shadow-md shadow-emerald-600/20"
             loading={submitting}
             disabled={disabled}
             onClick={handleCOD}
           >
-            Place Order (Cash on Delivery)
+            Place Order (Cash on Delivery) — ৳{amount.toLocaleString()}
           </Button>
         </div>
       )}
 
-      {/* Wallet providers — same panel shape for bKash/Nagad/Rocket */}
-      {WALLET_PROVIDERS.filter((w) => w.id === paymentMethod).map((wallet) => (
-        <div key={wallet.id} className="space-y-4">
-          <div className="rounded-xl border border-pink-200 bg-pink-50 p-4">
-            <h4 className="font-semibold text-pink-700">{wallet.label}</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              You'll be redirected to {wallet.label} to confirm and complete this
-              payment of ৳{amount.toLocaleString()}, then brought back here
-              automatically.
-            </p>
-          </div>
-
-          <Button
-            type="button"
-            size="lg"
-            className="w-full bg-pink-600 hover:bg-pink-700"
-            loading={submitting}
-            disabled={disabled}
-            onClick={() => handleWalletPayment(wallet.id)}
-          >
-            Pay with {wallet.label}
-          </Button>
-        </div>
-      ))}
-
-      {/* SSLCommerz */}
+      {/* ── SSLCommerz Panel ── */}
       {paymentMethod === "sslcommerz" && (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <h4 className="font-semibold text-blue-700">SSLCommerz</h4>
-            <p className="text-sm text-gray-600 mt-1">
-              Your order will be placed now, then you'll be redirected to SSLCommerz's
-              secure page to pay ৳{amount.toLocaleString()} by card, bKash, Nagad, Rocket,
-              or internet banking. You'll be brought back here once you're done.
+        <div className="space-y-4 animate-fade-in">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-5">
+            <h4 className="font-bold text-blue-900 text-sm">Pay via SSLCommerz Gateway</h4>
+            <p className="text-xs text-blue-800/80 mt-1 leading-relaxed">
+              You will be redirected to SSLCommerz&apos;s 100% secure payment portal to complete payment of ৳{amount.toLocaleString()} using any Bangladeshi Bank Card (Visa/Mastercard), bKash, Nagad, Rocket, or Net Banking.
             </p>
           </div>
 
           <Button
             type="button"
             size="lg"
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 shadow-md shadow-blue-600/20"
             loading={submitting}
             disabled={disabled}
             onClick={handleSslCommerzPayment}
           >
-            Pay with SSLCommerz
+            Pay with SSLCommerz — ৳{amount.toLocaleString()}
           </Button>
+        </div>
+      )}
+
+      {/* ── bKash Direct Panel ── */}
+      {paymentMethod === "bkash" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="rounded-2xl border border-pink-200 bg-pink-50/80 p-5">
+            <h4 className="font-bold text-pink-900 text-sm">Direct bKash Payment</h4>
+            <p className="text-xs text-pink-800/80 mt-1 leading-relaxed">
+              You will be redirected to bKash to authenticate and pay ৳{amount.toLocaleString()}, then returned here automatically to complete your order.
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            size="lg"
+            className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3.5 shadow-md shadow-pink-600/20"
+            loading={submitting}
+            disabled={disabled}
+            onClick={() => handleWalletPayment("bkash")}
+          >
+            Pay with bKash — ৳{amount.toLocaleString()}
+          </Button>
+        </div>
+      )}
+
+      {/* ── Stripe Panel ── */}
+      {paymentMethod === "stripe" && (
+        <div className="space-y-4 animate-fade-in">
+          {stripeLoading && (
+            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-8 text-center space-y-3">
+              <div className="w-8 h-8 border-3 border-gray-300 border-t-primary rounded-full animate-spin mx-auto" />
+              <p className="text-xs text-gray-500 font-medium">Initializing secure Stripe card form...</p>
+            </div>
+          )}
+
+          {stripeError && !stripeLoading && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-3">
+              <div className="flex items-start gap-3">
+                <FiAlertTriangle className="text-amber-600 mt-0.5 shrink-0" size={18} />
+                <div>
+                  <h4 className="font-bold text-amber-900 text-sm">Stripe Gateway Not Configured</h4>
+                  <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">
+                    {stripeError}
+                  </p>
+                  <p className="text-xs text-amber-900 font-semibold mt-2">
+                    💡 Tip: Please select <strong>Cash on Delivery</strong> or <strong>Card / Mobile Banking (SSLCommerz)</strong> above to complete your order right now.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
+                onClick={() => setPaymentMethod("cod")}
+              >
+                Switch to Cash on Delivery
+              </Button>
+            </div>
+          )}
+
+          {stripeClientSecret && stripePublishableKey && !stripeLoading && (
+            <Elements
+              stripe={getStripe(stripePublishableKey)}
+              options={{
+                clientSecret: stripeClientSecret,
+                appearance: { theme: "stripe", variables: { colorPrimary: "#fda702" } },
+              }}
+            >
+              <StripeCardInnerForm onPaymentSuccess={onPaymentSuccess} disabled={disabled} />
+            </Elements>
+          )}
         </div>
       )}
     </div>

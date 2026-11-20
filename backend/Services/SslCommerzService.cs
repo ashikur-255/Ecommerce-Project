@@ -15,10 +15,12 @@ public class SslCommerzService
     private readonly ILogger<SslCommerzService> _log;
 
     private string StoreId => _config["SSLCommerz:StoreId"]
-        ?? throw new InvalidOperationException("SSLCommerz:StoreId not configured");
+        ?? Environment.GetEnvironmentVariable("SSLCommerz__StoreId")
+        ?? string.Empty;
     private string StorePasswd => _config["SSLCommerz:StorePasswd"]
-        ?? throw new InvalidOperationException("SSLCommerz:StorePasswd not configured");
-    private bool IsSandbox => bool.Parse(_config["SSLCommerz:IsSandbox"] ?? "true");
+        ?? Environment.GetEnvironmentVariable("SSLCommerz__StorePasswd")
+        ?? string.Empty;
+    private bool IsSandbox => bool.Parse(_config["SSLCommerz:IsSandbox"] ?? Environment.GetEnvironmentVariable("SSLCommerz__IsSandbox") ?? "true");
 
     private string BaseUrl => IsSandbox
         ? "https://sandbox.sslcommerz.com"

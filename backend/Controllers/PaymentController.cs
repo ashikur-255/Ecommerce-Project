@@ -27,10 +27,11 @@ public class PaymentController : ControllerBase
         _paymentRecordService = paymentRecordService;
         _db = db;
 
-        StripeConfiguration.ApiKey =
-            _config["Stripe:SecretKey"]
-            ?? throw new InvalidOperationException(
-                "Stripe:SecretKey is not configured.");
+        var stripeKey = _config["Stripe:SecretKey"] ?? Environment.GetEnvironmentVariable("Stripe__SecretKey");
+        if (!string.IsNullOrEmpty(stripeKey) && !stripeKey.Contains("sk_test_xxx"))
+        {
+            StripeConfiguration.ApiKey = stripeKey;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -101,6 +102,16 @@ public class PaymentController : ControllerBase
                 ApiResponse<string>.Fail(
                     "Amount must be greater than zero."));
         }
+
+        var stripeKey = _config["Stripe:SecretKey"] ?? Environment.GetEnvironmentVariable("Stripe__SecretKey");
+        if (string.IsNullOrWhiteSpace(stripeKey) || stripeKey.Contains("sk_test_xxx"))
+        {
+            return BadRequest(
+                ApiResponse<string>.Fail(
+                    "Stripe payment gateway is not configured yet on this server. Please choose Cash on Delivery or another available payment method."));
+        }
+
+        StripeConfiguration.ApiKey = stripeKey;
 
         var userIdClaim =
             User.FindFirst(
