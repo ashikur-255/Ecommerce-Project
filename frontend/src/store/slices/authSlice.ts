@@ -281,10 +281,10 @@ export const login = createAsyncThunk<
 });
 
 /**
- * Register new user
+ * Register new user - registers the account and redirects to login (does not auto-authenticate)
  */
 export const register = createAsyncThunk<
-  AuthData,
+  { message: string },
   RegisterDto,
   { rejectValue: string }
 >("auth/register", async (userData, { rejectWithValue }) => {
@@ -300,20 +300,18 @@ export const register = createAsyncThunk<
       return rejectWithValue("Please provide either email or phone number.");
     }
 
-    const response = await api.post<ApiResponse<AuthData>>(
+    const response = await api.post<ApiResponse<any>>(
       "/auth/register",
       userData
     );
 
-    // Handle response properly
-    if (response.data.success && response.data.data) {
-      const authData = response.data.data;
-      if (authData.token) {
-        storage.setToken(authData.token);
-        storage.setUser(authData.user);
-        api.defaults.headers.common["Authorization"] = `Bearer ${authData.token}`;
-      }
-      return authData;
+    // Handle response properly - do NOT store auth token, user must login manually
+    if (response.data.success) {
+      storage.clearAll();
+      delete api.defaults.headers.common["Authorization"];
+      return {
+        message: response.data.message || "Registration successful! Please sign in with your credentials.",
+      };
     } else {
       return rejectWithValue(response.data.message || "Registration failed.");
     }
@@ -713,14 +711,12 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state, action) => {
+      .addCase(register.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
-        if (action.payload?.token) {
-          state.user = action.payload.user;
-          state.token = action.payload.token;
-          state.isAuthenticated = true;
-        }
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;

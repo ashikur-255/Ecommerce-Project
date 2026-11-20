@@ -71,7 +71,7 @@ export function RegisterPage() {
     }
 
     try {
-      await dispatch(
+      const res = await dispatch(
         register({
           name: name,
           email: email || undefined,
@@ -82,8 +82,15 @@ export function RegisterPage() {
 
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
       dispatch(clearError());
-      toast.success("Account created successfully! Welcome to BDFashions.");
-      navigate("/", { replace: true });
+      toast.success("Account created successfully! Please sign in with your credentials.");
+      navigate("/login", {
+        replace: true,
+        state: {
+          message:
+            res?.message ||
+            "Account created successfully! Please sign in with your email or phone to continue.",
+        },
+      });
     } catch (err) {
       const message = typeof err === "string" ? err : "Registration failed. Please try again.";
       setLocalError(message);
