@@ -419,17 +419,17 @@ useEffect(() => {
 
   return (
     <main className="pt-20 min-h-screen bg-light">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl font-black text-dark mb-2">Admin Dashboard</h1>
-        <p className="text-gray-400 mb-8">Manage products, orders, categories, and payments</p>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <h1 className="text-2xl sm:text-3xl font-black text-dark mb-1 sm:mb-2">Admin Dashboard</h1>
+        <p className="text-xs sm:text-sm text-gray-400 mb-6 sm:mb-8">Manage products, orders, categories, and payments</p>
 
-        <div className="flex gap-2 mb-8 bg-white rounded-xl p-1 w-fit border border-gray-100">
+        <div className="flex gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-white rounded-2xl p-1.5 w-full sm:w-fit border border-gray-100 overflow-x-auto scrollbar-none shadow-xs">
           {(["products", "orders", "categories", "payments"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold capitalize transition-colors ${
-                tab === t ? "bg-primary text-white" : "text-gray-400 hover:text-dark"
+              className={`flex-1 sm:flex-initial text-center px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold capitalize whitespace-nowrap transition-all ${
+                tab === t ? "bg-primary text-white shadow-xs" : "text-gray-400 hover:text-dark hover:bg-gray-50"
               }`}
             >
               {t}
@@ -440,9 +440,9 @@ useEffect(() => {
         {/* ═══════════════════════ PRODUCTS ═══════════════════════ */}
         {tab === "products" && (
           <div>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-              <div className="relative max-w-md w-full">
-                <FiSearch size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div className="relative flex-1 max-w-md">
+                <FiSearch size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={productSearch}
@@ -451,10 +451,10 @@ useEffect(() => {
                     setProductPage(1);
                   }}
                   placeholder="Search product, category or brand..."
-                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+                  className="w-full pl-10 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-xl text-xs sm:text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
                 />
               </div>
-              <Button onClick={openCreateForm}>
+              <Button onClick={openCreateForm} className="w-full sm:w-auto justify-center">
                 <FiPlus className="mr-2" /> Add Product
               </Button>
             </div>
@@ -543,17 +543,17 @@ useEffect(() => {
         {/* ═══════════════════════ ORDERS ═══════════════════════ */}
         {tab === "orders" && (
           <div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6">
               <StatCard label="Total Orders" value={ordersTotal || orders.length} icon={<FiShoppingBag />} color="blue" />
               <StatCard label="Processing" value={processingCount} icon={<FiClock />} color="yellow" />
               <StatCard label="Delivered" value={deliveredCount} icon={<FiCheckCircle />} color="green" />
               <StatCard label="Revenue" value={`৳${totalRevenue.toLocaleString()}`} icon={<FiDollarSign />} color="purple" />
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-              <div className="flex flex-col lg:flex-row gap-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-3.5 sm:p-5 mb-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <FiSearch size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FiSearch size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     value={orderSearch}
                     onChange={(e) => {
@@ -561,13 +561,13 @@ useEffect(() => {
                       setOrderPage(1);
                     }}
                     placeholder="Search customer, phone or order #..."
-                    className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                    className="w-full h-11 sm:h-12 pl-10 pr-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-xs sm:text-sm"
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as OrderStatus | "all")}
-                  className="h-12 rounded-xl border border-gray-200 px-4 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none capitalize"
+                  className="h-11 sm:h-12 rounded-xl border border-gray-200 px-3.5 text-xs sm:text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none capitalize w-full sm:w-48 shrink-0 font-medium"
                 >
                   <option value="all">All Orders</option>
                   {ORDER_STATUSES.map((s) => (
@@ -588,58 +588,57 @@ useEffect(() => {
                   const isExpanded = expandedOrder === o.id;
 
                   return (
-                    <div key={o.id} className="rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden">
-                      <div className="p-6">
-                        <div className="flex justify-between items-start flex-wrap gap-4">
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <h2 className="text-xl font-black text-dark">Order #{o.id}</h2>
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                                o.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    <div key={o.id} className="rounded-2xl border border-gray-100 bg-white shadow-xs hover:shadow-md transition-all overflow-hidden">
+                      <div className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                              <h2 className="text-lg sm:text-xl font-black text-dark">Order #{o.id}</h2>
+                              <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold capitalize ${
+                                o.paymentStatus === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                               }`}>
                                 {o.paymentStatus}
                               </span>
                               {o.trackingCode && (
-                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-600">
+                                <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-purple-50 text-purple-600">
                                   Steadfast
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex flex-wrap gap-5 mt-4 text-sm text-gray-500">
-                              <span className="flex items-center gap-1.5"><FiUser size={14} /> {o.shippingAddress.fullName}</span>
-                              <span className="flex items-center gap-1.5"><FiPhone size={14} /> {o.shippingAddress.phone}</span>
-                              <span className="flex items-center gap-1.5"><FiMapPin size={14} /> {o.shippingAddress.city}</span>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 sm:mt-2.5 text-xs sm:text-sm text-gray-500">
+                              <span className="flex items-center gap-1.5"><FiUser size={13} className="shrink-0" /> <span className="truncate">{o.shippingAddress.fullName}</span></span>
+                              <span className="flex items-center gap-1.5"><FiPhone size={13} className="shrink-0" /> {o.shippingAddress.phone}</span>
+                              <span className="flex items-center gap-1.5"><FiMapPin size={13} className="shrink-0" /> {o.shippingAddress.city}</span>
                             </div>
                           </div>
 
-                          <div className="text-right">
-                            <div className="text-2xl font-black text-primary">৳{o.totalAmount.toLocaleString()}</div>
-                            <div className="text-sm text-gray-400 mt-1">
+                          <div className="flex sm:flex-col justify-between items-baseline sm:items-end border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
+                            <div className="text-xl sm:text-2xl font-black text-primary">৳{o.totalAmount.toLocaleString()}</div>
+                            <div className="text-xs text-gray-400 mt-0.5">
                               {o.orderItems?.length ?? 0} product{(o.orderItems?.length ?? 0) !== 1 ? "s" : ""} · {totalQty} qty
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap justify-between items-center gap-4 mt-5">
-                          <div className="flex flex-wrap gap-3">
-                              <select
-                                value={o.orderStatus}
-                                onChange={(e) => handleOrderStatusChange(o.id, e.target.value as OrderStatus)}
-                                disabled={o.orderStatus === "cancelled"}
-                                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm capitalize outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
-                              >
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-3 mt-4 pt-3.5 border-t border-gray-100">
+                          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3 w-full sm:w-auto">
+                            <select
+                              value={o.orderStatus}
+                              onChange={(e) => handleOrderStatusChange(o.id, e.target.value as OrderStatus)}
+                              disabled={o.orderStatus === "cancelled"}
+                              className="w-full sm:w-auto border border-gray-200 rounded-xl px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm capitalize outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 font-medium"
+                            >
                               {ORDER_STATUSES.map((s) => (
                                 <option key={s} value={s} className="capitalize">{s}</option>
                               ))}
                             </select>
 
-                            
                             <select
                               value={o.paymentStatus}
                               onChange={(e) => handlePaymentStatusChange(o.id, e.target.value as PaymentStatus)}
                               disabled={o.orderStatus === "delivered" || o.orderStatus === "cancelled"}
-                              className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm capitalize outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
+                              className="w-full sm:w-auto border border-gray-200 rounded-xl px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm capitalize outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 font-medium"
                             >
                               {PAYMENT_STATUSES.map((s) => (
                                 <option key={s} value={s} className="capitalize">{s}</option>
@@ -647,11 +646,11 @@ useEffect(() => {
                             </select>
                           </div>
 
-                          <div className="flex gap-3">
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
                             {o.orderStatus === "cancelled" && (
                               <button
                                 onClick={() => handleDeleteOrder(o.id)}
-                                className="px-4 py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                className="px-3.5 py-2 sm:py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors shrink-0"
                                 title="Delete order"
                               >
                                 <FiTrash2 size={16} />
@@ -659,55 +658,55 @@ useEffect(() => {
                             )}
                             <button
                               onClick={() => toggleOrder(o.id)}
-                              className="px-5 py-2.5 rounded-xl bg-primary text-white flex items-center gap-2 text-sm font-medium hover:bg-primary-dark transition-colors"
+                              className="flex-1 sm:flex-initial justify-center px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-white flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold hover:bg-primary-dark transition-colors shadow-xs"
                             >
-                              {isExpanded ? "Hide Details" : "View Details"}
-                              {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                              <span>{isExpanded ? "Hide Details" : "View Details"}</span>
+                              {isExpanded ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
                             </button>
                           </div>
                         </div>
                       </div>
 
                       {isExpanded && (
-                        <div className="border-t border-gray-100 p-6 bg-light/40">
-                          <div className="grid lg:grid-cols-3 gap-6">
+                        <div className="border-t border-gray-100 p-3.5 sm:p-6 bg-light/40">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                             <div className="lg:col-span-2">
-                              <div className="flex items-center gap-2 mb-4">
+                              <div className="flex items-center gap-2 mb-3 sm:mb-4">
                                 <FiPackage className="text-primary" />
-                                <h3 className="text-base font-bold text-dark">
+                                <h3 className="text-sm sm:text-base font-bold text-dark">
                                   Ordered Products ({o.orderItems?.length ?? 0})
                                 </h3>
                               </div>
 
-                              <div className="space-y-3">
+                              <div className="space-y-2.5 sm:space-y-3">
                                 {(o.orderItems ?? []).map((item, index) => (
                                   <div key={index}
-                                    className="flex gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:border-primary/30 transition-all">
+                                    className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-gray-100 bg-white hover:border-primary/30 transition-all">
                                     <img
                                       src={getImageUrl(item.productImage)}
                                       alt={item.productName}
-                                      className="w-16 h-16 rounded-xl object-cover bg-gray-100 border border-gray-100"
+                                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover bg-gray-100 border border-gray-100 shrink-0"
                                       onError={(e) => handleImageError(e, undefined, item.productName)}
                                     />
-                                    <div className="flex-1">
-                                      <div className="flex justify-between gap-3">
-                                        <div>
-                                          <h4 className="font-semibold text-dark text-sm">{item.productName}</h4>
-                                          <div className="flex flex-wrap gap-2 mt-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex justify-between items-start gap-2">
+                                        <div className="min-w-0">
+                                          <h4 className="font-semibold text-dark text-xs sm:text-sm line-clamp-2">{item.productName}</h4>
+                                          <div className="flex flex-wrap gap-1.5 mt-1.5">
                                             {item.size && (
-                                              <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-xs">Size: {item.size}</span>
+                                              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[11px] text-gray-700">Size: {item.size}</span>
                                             )}
                                             {item.color && (
-                                              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs">{item.color}</span>
+                                              <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[11px]">Color: {item.color}</span>
                                             )}
                                           </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                          <p className="text-xs text-gray-400">Unit Price</p>
-                                          <p className="font-bold text-dark text-sm">৳{item.price.toLocaleString()}</p>
+                                          <p className="text-[11px] sm:text-xs text-gray-400">Unit Price</p>
+                                          <p className="font-bold text-dark text-xs sm:text-sm">৳{item.price.toLocaleString()}</p>
                                         </div>
                                       </div>
-                                      <div className="flex gap-4 mt-3 text-xs">
+                                      <div className="flex gap-3 sm:gap-4 mt-2 sm:mt-3 text-xs">
                                         <span className="text-gray-400">Qty: <strong className="text-dark">{item.quantity}</strong></span>
                                         <span className="text-gray-400">
                                           Subtotal: <strong className="text-dark">৳{(item.quantity * item.price).toLocaleString()}</strong>
@@ -719,35 +718,35 @@ useEffect(() => {
                               </div>
                             </div>
 
-                            <div className="space-y-5">
-                              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                                <h3 className="font-bold text-dark mb-4 text-sm">Payment Summary</h3>
-                                <div className="space-y-2 text-sm">
+                            <div className="space-y-4 sm:space-y-5">
+                              <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+                                <h3 className="font-bold text-dark mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider text-gray-400">Payment Summary</h3>
+                                <div className="space-y-2 text-xs sm:text-sm">
                                   <Row label="Subtotal" value={`৳${o.subTotal.toLocaleString()}`} />
                                   <Row label="Shipping" value={o.shippingCost === 0 ? "FREE" : `৳${o.shippingCost}`} />
                                   <Row label="Tax" value={`৳${o.tax.toFixed(2)}`} />
-                                  <hr className="my-1" />
-                                  <div className="flex justify-between font-black text-dark">
+                                  <hr className="my-1 border-gray-100" />
+                                  <div className="flex justify-between font-black text-dark text-sm sm:text-base">
                                     <span>Total</span>
                                     <span className="text-primary">৳{o.totalAmount.toLocaleString()}</span>
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                                <h3 className="font-bold text-dark mb-4 text-sm">Delivery Information</h3>
-                                <div className="space-y-3 text-sm">
+                              <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+                                <h3 className="font-bold text-dark mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider text-gray-400">Delivery Information</h3>
+                                <div className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
                                   <div>
-                                    <p className="text-gray-400 text-xs">Customer</p>
+                                    <p className="text-gray-400 text-[11px]">Customer</p>
                                     <p className="font-medium text-dark">{o.shippingAddress.fullName}</p>
                                   </div>
                                   <div>
-                                    <p className="text-gray-400 text-xs">Phone</p>
+                                    <p className="text-gray-400 text-[11px]">Phone</p>
                                     <p className="font-medium text-dark">{o.shippingAddress.phone}</p>
                                   </div>
                                   <div>
-                                    <p className="text-gray-400 text-xs">Address</p>
-                                    <p className="text-dark leading-5">
+                                    <p className="text-gray-400 text-[11px]">Address</p>
+                                    <p className="text-dark leading-relaxed">
                                       {o.shippingAddress.address}<br />
                                       {o.shippingAddress.city}, {o.shippingAddress.postalCode}<br />
                                       {o.shippingAddress.country}
@@ -757,17 +756,17 @@ useEffect(() => {
                               </div>
 
                               {/* Courier / Steadfast tracking */}
-                              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                                <h3 className="font-bold text-dark mb-4 text-sm">Courier</h3>
+                              <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+                                <h3 className="font-bold text-dark mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider text-gray-400">Courier</h3>
                                 {o.trackingCode ? (
-                                  <div className="space-y-3 text-sm">
+                                  <div className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
                                     <div>
-                                      <p className="text-gray-400 text-xs">Tracking Code</p>
-                                      <p className="font-mono font-semibold text-dark">{o.trackingCode}</p>
+                                      <p className="text-gray-400 text-[11px]">Tracking Code</p>
+                                      <p className="font-mono font-semibold text-dark break-all">{o.trackingCode}</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-400 text-xs">Courier Status</p>
-                                      <span className="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold capitalize bg-blue-50 text-blue-600">
+                                      <p className="text-gray-400 text-[11px]">Courier Status</p>
+                                      <span className="inline-block mt-1 px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize bg-blue-50 text-blue-600">
                                         {(o.deliveryStatus ?? "pending").replace(/_/g, " ")}
                                       </span>
                                     </div>
@@ -781,7 +780,7 @@ useEffect(() => {
                                     </a>
                                   </div>
                                 ) : (
-                                  <p className="text-gray-400 text-sm">
+                                  <p className="text-gray-400 text-xs sm:text-sm">
                                     {o.orderStatus === "processing"
                                       ? "Consignment will be created once this order is marked as shipped."
                                       : "No courier consignment linked to this order."}
@@ -822,18 +821,18 @@ useEffect(() => {
 
       {/* Add/Edit Product Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="font-black text-dark text-lg">{editingId ? "Edit Product" : "Add Product"}</h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-dark">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="font-black text-dark text-base sm:text-lg">{editingId ? "Edit Product" : "Add Product"}</h2>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-dark p-1">
                 <FiX size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-dark mb-1">Name *</label>
                   <input
                     required
@@ -843,7 +842,7 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-dark mb-1">Description</label>
                   <textarea
                     rows={3}
@@ -1004,7 +1003,7 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="col-span-2 space-y-4">
+                <div className="sm:col-span-2 space-y-4">
                   {/* Existing images list (when editing a product) */}
                   {form.existingImages.length > 0 && (
                     <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200">
@@ -1140,7 +1139,7 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-dark mb-1">Tags (pipe-separated)</label>
                   <input
                     value={form.tags}
@@ -1150,7 +1149,7 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="col-span-2 flex gap-6">
+                <div className="sm:col-span-2 flex flex-wrap gap-4 sm:gap-6">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
@@ -1210,13 +1209,13 @@ function StatCard({
   }[color];
 
   return (
-    <div className={`${bg} rounded-2xl p-5`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <h2 className="text-2xl font-black text-dark mt-1">{value}</h2>
+    <div className={`${bg} rounded-2xl p-3 sm:p-5 border border-black/5`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm text-gray-500 font-medium truncate">{label}</p>
+          <h2 className="text-lg sm:text-2xl font-black text-dark mt-0.5 sm:mt-1 truncate">{value}</h2>
         </div>
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-lg ${iconBg}`}>
+        <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-base sm:text-lg shrink-0 ${iconBg}`}>
           {icon}
         </div>
       </div>

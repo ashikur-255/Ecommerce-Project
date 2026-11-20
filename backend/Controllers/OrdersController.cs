@@ -1,4 +1,4 @@
-﻿using EcommerceAPI.Data;
+using EcommerceAPI.Data;
 using EcommerceAPI.DTOs;
 using EcommerceAPI.Models;
 using EcommerceAPI.Services;
@@ -17,12 +17,18 @@ public class OrdersController : ControllerBase
     private readonly AppDbContext _db;
     private readonly PaymentRecordService _paymentRecordService;
     private readonly SteadfastCourierService _steadfast;
+    private readonly ILogger<OrdersController> _logger;
 
-    public OrdersController(AppDbContext db, PaymentRecordService paymentRecordService, SteadfastCourierService steadfast)
+    public OrdersController(
+        AppDbContext db,
+        PaymentRecordService paymentRecordService,
+        SteadfastCourierService steadfast,
+        ILogger<OrdersController> logger)
     {
         _db = db;
         _paymentRecordService = paymentRecordService;
         _steadfast = steadfast;
+        _logger = logger;
     }
 
     private int UserId =>
@@ -282,30 +288,37 @@ public class OrdersController : ControllerBase
             }
         }
 
-        // ── Create Steadfast consignment the first time an order goes "shipped" ──
+        // ── Create Steadfast consignment the first time an order goes "shipped" (if configured) ──
         if (newStatus == "shipped" && string.IsNullOrEmpty(order.ConsignmentId))
         {
-            try
+            if (_steadfast.IsConfigured)
             {
-                var codAmount = order.PaymentMethod == "cashondelivery" ? order.TotalAmount : 0m;
-
-                var result = await _steadfast.CreateOrderAsync(new SteadfastCreateOrderRequest
+                try
                 {
-                    Invoice = $"ORD-{order.Id}",
-                    RecipientName = order.ShipFullName,
-                    RecipientPhone = order.ShipPhone,
-                    RecipientAddress = $"{order.ShipAddress}, {order.ShipCity}, {order.ShipPostalCode}",
-                    CodAmount = codAmount,
-                    Note = $"Order #{order.Id}"
-                });
+                    var codAmount = order.PaymentMethod == "cashondelivery" ? order.TotalAmount : 0m;
 
-                order.ConsignmentId = result.Consignment!.ConsignmentId.ToString();
-                order.TrackingCode = result.Consignment.TrackingCode;
-                order.DeliveryStatus = result.Consignment.Status;
-            }
-            catch (ApplicationException ex)
-            {
-                return StatusCode(502, ApiResponse<string>.Fail($"Courier booking failed: {ex.Message}"));
+                    var result = await _steadfast.CreateOrderAsync(new SteadfastCreateOrderRequest
+                    {
+                        Invoice = $"ORD-{order.Id}",
+                        RecipientName = order.ShipFullName,
+                        RecipientPhone = order.ShipPhone,
+                        RecipientAddress = $"{order.ShipAddress}, {order.ShipCity}, {order.ShipPostalCode}",
+                        CodAmount = codAmount,
+                        Note = $"Order #{order.Id}"
+                    });
+
+                    if (result?.Consignment != null)
+                    {
+                        order.ConsignmentId = result.Consignment.ConsignmentId.ToString();
+                        order.TrackingCode = result.Consignment.TrackingCode;
+                        order.DeliveryStatus = result.Consignment.Status;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Steadfast courier booking failed for order #{OrderId}: {Message}. Continuing status update.", order.Id, ex.Message);
+                    // Do NOT fail the order status update if external courier is unavailable or unconfigured
+                }
             }
         }
 

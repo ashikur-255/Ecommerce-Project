@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using EcommerceAPI.DTOs;
@@ -19,17 +19,32 @@ public class SteadfastCourierService
     private readonly HttpClient _http;
     private readonly SteadfastOptions _options;
 
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(_options.BaseUrl) &&
+        !string.IsNullOrWhiteSpace(_options.ApiKey) &&
+        !string.IsNullOrWhiteSpace(_options.SecretKey) &&
+        _options.BaseUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+
     public SteadfastCourierService(HttpClient http, IOptions<SteadfastOptions> options)
     {
         _options = options.Value;
         _http = http;
-        _http.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
-        _http.DefaultRequestHeaders.Add("Api-Key", _options.ApiKey);
-        _http.DefaultRequestHeaders.Add("Secret-Key", _options.SecretKey);
+
+        if (IsConfigured)
+        {
+            _http.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
+            _http.DefaultRequestHeaders.Add("Api-Key", _options.ApiKey);
+            _http.DefaultRequestHeaders.Add("Secret-Key", _options.SecretKey);
+        }
     }
 
-    public async Task<SteadfastCreateOrderResponse> CreateOrderAsync(SteadfastCreateOrderRequest req)
+    public async Task<SteadfastCreateOrderResponse?> CreateOrderAsync(SteadfastCreateOrderRequest req)
     {
+        if (!IsConfigured)
+        {
+            return null;
+        }
+
         var payload = new
         {
             invoice = req.Invoice,
