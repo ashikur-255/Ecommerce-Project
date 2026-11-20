@@ -643,16 +643,32 @@ public class AuthController : ControllerBase
 
                 await _db.SaveChangesAsync();
 
-                var frontendUrl = _configuration["Cors:AllowedOrigins:0"] ?? "http://localhost:5173";
+                var frontendUrl = _configuration["Cors:AllowedOrigins:0"] ?? "https://www.clickebd.xyz";
                 var verifyLink = $"{frontendUrl}/verify-email?token={token}";
                 var html = EmailTemplates.VerificationEmail(user.Name, verifyLink);
 
-                await _emailService.SendEmailAsync(user.Email, "Verify Your Email Address", html);
+                bool emailSent = false;
+                try
+                {
+                    await _emailService.SendEmailAsync(user.Email, "Verify Your Email Address", html);
+                    emailSent = true;
+                    _logger.LogInformation($"Verification email resent to: {user.Email}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, $"Failed to deliver email to {user.Email}: {ex.Message}");
+                }
 
-                _logger.LogInformation($"Verification email resent to: {user.Email}");
-                return Ok(ApiResponse<string>.Ok(
-                    "Verification Email Sent",
-                    "A new verification email has been sent successfully."
+                return Ok(ApiResponse<object>.Ok(
+                    new
+                    {
+                        email = user.Email,
+                        emailSent = emailSent,
+                        verifyUrl = verifyLink
+                    },
+                    emailSent
+                        ? "A new verification email has been sent successfully. Please check your inbox and spam folder."
+                        : "Verification link generated. If email delivery is delayed, click the instant verify link."
                 ));
             }
 

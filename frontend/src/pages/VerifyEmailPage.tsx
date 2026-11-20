@@ -24,6 +24,7 @@ export function VerifyEmailPage() {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
+  const [instantVerifyUrl, setInstantVerifyUrl] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -87,7 +88,10 @@ export function VerifyEmailPage() {
       const res = await dispatch(resendVerification({ email: targetEmail, type: "email" })).unwrap();
       const msg = res.message || "Verification email sent! Please check your inbox and spam folder.";
       setSuccessNotice(msg);
-      toast.success("Verification link sent!");
+      if (res.verifyUrl) {
+        setInstantVerifyUrl(res.verifyUrl);
+      }
+      toast.success("Verification link generated!");
       setResendCooldown(60); // 60s cooldown
       setIsEditingEmail(false);
     } catch (err) {
@@ -252,6 +256,23 @@ export function VerifyEmailPage() {
           <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl text-left flex items-start gap-2.5">
             <FiCheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <span>{successNotice}</span>
+          </div>
+        )}
+
+        {instantVerifyUrl && (
+          <div className="mb-5 p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-left space-y-2.5 animate-fade-in shadow-sm">
+            <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs uppercase tracking-wider">
+              <span>⚡</span> Direct Verification Link Ready:
+            </div>
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              If your email is delayed by firewall or spam filters, you can verify your account instantly by clicking below:
+            </p>
+            <a
+              href={instantVerifyUrl}
+              className="inline-flex items-center justify-center w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-all shadow hover:shadow-md"
+            >
+              Verify My Account Now
+            </a>
           </div>
         )}
 

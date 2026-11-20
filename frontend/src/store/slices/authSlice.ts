@@ -459,7 +459,7 @@ export const verifyPhone = createAsyncThunk<
  * Resend verification (email or phone)
  */
 export const resendVerification = createAsyncThunk<
-  { message: string },
+  { message: string; verifyUrl?: string; emailSent?: boolean },
   ResendVerificationDto,
   { rejectValue: string }
 >("auth/resendVerification", async (data, { rejectWithValue }) => {
@@ -471,13 +471,19 @@ export const resendVerification = createAsyncThunk<
       return rejectWithValue("Verification type is required.");
     }
 
-    const response = await api.post<ApiResponse<string>>(
+    const response = await api.post<ApiResponse<any>>(
       "/auth/resend-verification",
       data
     );
 
+    const resData = response.data?.data;
+    const verifyUrl = typeof resData === "object" ? resData?.verifyUrl : undefined;
+    const emailSent = typeof resData === "object" ? resData?.emailSent : undefined;
+
     return {
       message: response.data.message || "Verification code sent successfully.",
+      verifyUrl,
+      emailSent,
     };
   } catch (error) {
     return rejectWithValue(getErrorMessage(error));
