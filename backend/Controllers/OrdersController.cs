@@ -324,15 +324,16 @@ public class OrdersController : ControllerBase
             return NotFound(ApiResponse<string>.Fail("Order not found."));
 
         if (!string.IsNullOrEmpty(order.ConsignmentId))
-            return BadRequest(ApiResponse<string>.Fail($"Order already booked with consignment ID: {order.ConsignmentId}"));
+            return BadRequest(ApiResponse<string>.Fail($"Order already booked with consignment ID: {order.ConsignmentId} (Tracking: {order.TrackingCode})"));
 
         if (!_steadfast.IsConfigured)
-            return BadRequest(ApiResponse<string>.Fail("Steadfast courier is not configured."));
+            return BadRequest(ApiResponse<string>.Fail("Steadfast courier is not configured. Please check API credentials."));
 
-        var booked = await TryBookSteadfastCourier(order);
-        if (!booked)
-            return BadRequest(ApiResponse<string>.Fail("Failed to book order on Steadfast. Please verify customer phone and address."));
+        var (success, errorMessage) = await BookSteadfastCourierInternal(order);
+        if (!success)
+            return BadRequest(ApiResponse<string>.Fail(errorMessage ?? "Failed to book order on Steadfast Courier."));
 
+        order.OrderStatus = "shipped";
         order.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
@@ -340,7 +341,8 @@ public class OrdersController : ControllerBase
         {
             consignmentId = order.ConsignmentId,
             trackingCode = order.TrackingCode,
-            deliveryStatus = order.DeliveryStatus
+            deliveryStatus = order.DeliveryStatus,
+            orderStatus = order.OrderStatus
         }, "Consignment booked successfully with Steadfast Courier."));
     }
 
@@ -360,57 +362,104 @@ public class OrdersController : ControllerBase
 
     private async Task<bool> TryBookSteadfastCourier(Order order)
     {
-        if (!_steadfast.IsConfigured || !string.IsNullOrEmpty(order.ConsignmentId))
-            return false;
+        var (success, _) = await BookSteadfastCourierInternal(order);
+        return success;
+    }
 
-        try
+    private async Task<(bool Success, string? ErrorMessage)> BookSteadfastCourierInternal(Order order)
+    {
+        if (!_steadfast.IsConfigured)
+            return (false, "Steadfast courier is not configured.");
+
+        if (!string.IsNullOrEmpty(order.ConsignmentId))
+            return (true, null);
+
+        // Normalize customer phone number
+        var rawPhone = order.ShipPhone?.Trim() ?? "";
+        var digits = new string(rawPhone.Where(char.IsDigit).ToArray());
+
+        if (digits.Length == 13 && digits.StartsWith("8801"))
         {
-            var rawPhone = order.ShipPhone?.Trim() ?? "";
-            var digits = new string(rawPhone.Where(char.IsDigit).ToArray());
-            if (digits.StartsWith("880") && digits.Length >= 13)
+            digits = digits.Substring(2);
+        }
+        else if (digits.Length == 12 && digits.StartsWith("880"))
+        {
+            digits = "0" + digits.Substring(3);
+        }
+        else if (digits.Length == 10 && digits.StartsWith("1"))
+        {
+            digits = "0" + digits;
+        }
+        else if (digits.Length > 11)
+        {
+            var last11 = digits.Substring(digits.Length - 11);
+            if (last11.StartsWith("01"))
             {
-                digits = digits.Substring(2);
-            }
-            if (digits.Length == 10 && !digits.StartsWith("0"))
-            {
-                digits = "0" + digits;
-            }
-            var cleanPhone = !string.IsNullOrWhiteSpace(digits) ? digits : rawPhone;
-
-            var fullAddress = $"{order.ShipAddress}, {order.ShipCity}".Trim();
-            if (!string.IsNullOrWhiteSpace(order.ShipPostalCode))
-            {
-                fullAddress += $" - {order.ShipPostalCode}";
-            }
-
-            var codAmount = order.PaymentStatus == "paid" ? 0m : order.TotalAmount;
-
-            var result = await _steadfast.CreateOrderAsync(new SteadfastCreateOrderRequest
-            {
-                Invoice = $"ORD-{order.Id}",
-                RecipientName = order.ShipFullName,
-                RecipientPhone = cleanPhone,
-                RecipientAddress = fullAddress,
-                CodAmount = codAmount,
-                Note = $"Order #{order.Id} - BDFashions"
-            });
-
-            if (result?.Consignment != null)
-            {
-                order.ConsignmentId = result.Consignment.ConsignmentId.ToString();
-                order.TrackingCode = result.Consignment.TrackingCode;
-                order.DeliveryStatus = result.Consignment.Status ?? "in_review";
-                _logger.LogInformation("Successfully booked Steadfast parcel for order #{OrderId}. Consignment: {Cid}, Tracking: {TrackingCode}",
-                    order.Id, order.ConsignmentId, order.TrackingCode);
-                return true;
+                digits = last11;
             }
         }
-        catch (Exception ex)
+
+        var cleanPhone = !string.IsNullOrWhiteSpace(digits) ? digits : rawPhone;
+
+        if (cleanPhone.Length != 11 || !cleanPhone.StartsWith("01"))
         {
-            _logger.LogWarning(ex, "Steadfast courier booking failed for order #{OrderId}: {Message}. Continuing status update.", order.Id, ex.Message);
+            return (false, $"Customer phone '{rawPhone}' is invalid. Steadfast Courier requires an 11-digit mobile number (e.g. 017XXXXXXXX).");
         }
 
-        return false;
+        // Format recipient delivery address (Steadfast limit: max 250 characters)
+        var addressParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(order.ShipAddress))
+            addressParts.Add(order.ShipAddress.Trim());
+        if (!string.IsNullOrWhiteSpace(order.ShipCity) && !order.ShipAddress.Contains(order.ShipCity, StringComparison.OrdinalIgnoreCase))
+            addressParts.Add(order.ShipCity.Trim());
+        if (!string.IsNullOrWhiteSpace(order.ShipPostalCode))
+            addressParts.Add(order.ShipPostalCode.Trim());
+
+        var fullAddress = string.Join(", ", addressParts);
+        if (string.IsNullOrWhiteSpace(fullAddress))
+        {
+            return (false, "Customer shipping address is required.");
+        }
+        if (fullAddress.Length > 250)
+        {
+            fullAddress = fullAddress.Substring(0, 250);
+        }
+
+        // Recipient name (Steadfast limit: max 100 characters)
+        var recipientName = string.IsNullOrWhiteSpace(order.ShipFullName) ? "Valued Customer" : order.ShipFullName.Trim();
+        if (recipientName.Length > 100)
+        {
+            recipientName = recipientName.Substring(0, 100);
+        }
+
+        // COD amount: 0 if already paid, total amount if COD/pending
+        var isPaid = string.Equals(order.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+        var codAmount = isPaid ? 0m : Math.Round(order.TotalAmount, 2);
+
+        var bookingResult = await _steadfast.CreateOrderAsync(new SteadfastCreateOrderRequest
+        {
+            Invoice = $"ORD-{order.Id}",
+            RecipientName = recipientName,
+            RecipientPhone = cleanPhone,
+            RecipientAddress = fullAddress,
+            CodAmount = codAmount,
+            Note = $"Order #{order.Id} - BDFashions"
+        });
+
+        if (!bookingResult.Success || bookingResult.Consignment == null)
+        {
+            _logger.LogWarning("Steadfast courier booking failed for order #{OrderId}: {Error}", order.Id, bookingResult.ErrorMessage);
+            return (false, bookingResult.ErrorMessage ?? "Failed to book order on Steadfast Courier.");
+        }
+
+        order.ConsignmentId = bookingResult.Consignment.ConsignmentId.ToString();
+        order.TrackingCode = bookingResult.Consignment.TrackingCode;
+        order.DeliveryStatus = string.IsNullOrWhiteSpace(bookingResult.Consignment.Status) ? "in_review" : bookingResult.Consignment.Status;
+
+        _logger.LogInformation("Successfully booked Steadfast parcel for order #{OrderId}. Consignment: {Cid}, Tracking: {TrackingCode}",
+            order.Id, order.ConsignmentId, order.TrackingCode);
+
+        return (true, null);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
