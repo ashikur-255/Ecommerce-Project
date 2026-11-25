@@ -80,19 +80,41 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative mt-20 overflow-hidden bg-[#FDA702] bg-gradient-to-br from-[#FFB92E] via-[#FDA702] to-[#E69300] text-dark">
-      {/* Subtle decorative ambient glow */}
+    <footer
+      aria-label="Site footer"
+      className="relative mt-20 overflow-hidden text-white"
+      style={{
+        background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #a855f7 100%)",
+        boxShadow: "0 -32px 64px -24px rgba(124, 58, 237, 0.35)",
+      }}
+    >
+      {/* MonsterASP Dual Radial Glows */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-white/20 blur-3xl"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.16) 0%, transparent 40%), radial-gradient(circle at 85% 75%, rgba(255, 255, 255, 0.12) 0%, transparent 40%)",
+        }}
       />
+
+      {/* MonsterASP Subtle Dot Matrix Pattern */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-dark/10 blur-3xl"
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at center, #000 30%, transparent 75%)",
+          maskImage:
+            "radial-gradient(ellipse at center, #000 30%, transparent 75%)",
+        }}
       />
 
       {/* Main Footer Content */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-12 z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           {/* Brand Info */}
           <div className="lg:col-span-4">
@@ -101,7 +123,7 @@ export default function Footer() {
               onClick={handleScrollToTop}
               className="group inline-flex items-center gap-3.5 mb-5"
             >
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-1 shadow-lg ring-2 ring-white/80 transition-transform duration-300 group-hover:scale-105">
+              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-1 shadow-xl ring-2 ring-white/90 transition-transform duration-300 group-hover:scale-105">
                 <img
                   src={bdfLogo}
                   alt="BDFashions Logo"
@@ -110,16 +132,16 @@ export default function Footer() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-black tracking-tight text-dark leading-none">
+                <h2 className="text-2xl font-black tracking-tight text-white leading-none">
                   BDFashions
                 </h2>
-                <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-dark/70">
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/80">
                   Performance Meets Style
                 </p>
               </div>
             </Link>
 
-            <p className="text-sm leading-relaxed text-dark/80 mb-6 max-w-sm">
+            <p className="text-sm leading-relaxed text-white/90 mb-6 max-w-sm">
               Discover premium sportswear, footwear, and lifestyle fashion
               engineered for comfort, crafted for performance, and designed for
               everyday confidence.
@@ -131,9 +153,9 @@ export default function Footer() {
                 href="https://maps.google.com/?q=Dhaka,Bangladesh"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 text-dark/85 transition-colors hover:text-dark"
+                className="group flex items-center gap-3 text-white/85 transition-colors hover:text-white"
               >
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-dark/10 text-dark transition-colors group-hover:bg-dark group-hover:text-[#FDA702]">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-sm transition-all duration-200 group-hover:bg-white group-hover:text-[#6d42ef] group-hover:border-white">
                   <FiMapPin size={15} />
                 </span>
                 <span className="font-medium">Dhaka, Bangladesh</span>
@@ -141,9 +163,9 @@ export default function Footer() {
 
               <a
                 href="tel:+8801708588330"
-                className="group flex items-center gap-3 text-dark/85 transition-colors hover:text-dark"
+                className="group flex items-center gap-3 text-white/85 transition-colors hover:text-white"
               >
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-dark/10 text-dark transition-colors group-hover:bg-dark group-hover:text-[#FDA702]">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-sm transition-all duration-200 group-hover:bg-white group-hover:text-[#6d42ef] group-hover:border-white">
                   <FiPhone size={15} />
                 </span>
                 <span className="font-medium">+880 1708-588330</span>
@@ -151,9 +173,9 @@ export default function Footer() {
 
               <a
                 href="mailto:ashikurr255@gmail.com"
-                className="group flex items-center gap-3 text-dark/85 transition-colors hover:text-dark"
+                className="group flex items-center gap-3 text-white/85 transition-colors hover:text-white"
               >
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-dark/10 text-dark transition-colors group-hover:bg-dark group-hover:text-[#FDA702]">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-sm transition-all duration-200 group-hover:bg-white group-hover:text-[#6d42ef] group-hover:border-white">
                   <FiMail size={15} />
                 </span>
                 <span className="font-medium break-all">
@@ -161,8 +183,8 @@ export default function Footer() {
                 </span>
               </a>
 
-              <div className="flex items-center gap-3 text-dark/80">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-dark/10 text-dark">
+              <div className="flex items-center gap-3 text-white/80">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-sm">
                   <FiClock size={15} />
                 </span>
                 <span className="font-medium">
@@ -174,7 +196,7 @@ export default function Footer() {
 
           {/* Shop */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-dark mb-5">
+            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-white/70 mb-5">
               Shop
             </h3>
 
@@ -183,15 +205,15 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                    className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                   >
                     <FiArrowRight
                       size={13}
-                      className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                      className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                     />
                     <span>{link.label}</span>
                     {link.badge && (
-                      <span className="rounded-md bg-dark px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-[#FDA702]">
+                      <span className="rounded-md bg-white/20 border border-white/25 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
                         {link.badge}
                       </span>
                     )}
@@ -203,7 +225,7 @@ export default function Footer() {
 
           {/* My Account */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-dark mb-5">
+            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-white/70 mb-5">
               My Account
             </h3>
 
@@ -211,15 +233,15 @@ export default function Footer() {
               <li>
                 <Link
                   to="/cart"
-                  className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                  className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                 >
                   <FiArrowRight
                     size={13}
-                    className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                    className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                   />
                   <span>Shopping Cart</span>
                   {itemCount > 0 && (
-                    <span className="rounded-full bg-dark px-2 py-0.5 text-[10px] font-bold text-[#FDA702]">
+                    <span className="rounded-full bg-white text-[#6d42ef] px-2 py-0.5 text-[10px] font-black shadow-sm">
                       {itemCount > 99 ? "99+" : itemCount}
                     </span>
                   )}
@@ -229,15 +251,15 @@ export default function Footer() {
               <li>
                 <Link
                   to="/wishlist"
-                  className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                  className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                 >
                   <FiArrowRight
                     size={13}
-                    className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                    className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                   />
                   <span>My Wishlist</span>
                   {wishlistCount > 0 && (
-                    <span className="rounded-full bg-dark px-2 py-0.5 text-[10px] font-bold text-[#FDA702]">
+                    <span className="rounded-full bg-white text-[#6d42ef] px-2 py-0.5 text-[10px] font-black shadow-sm">
                       {wishlistCount > 99 ? "99+" : wishlistCount}
                     </span>
                   )}
@@ -247,11 +269,11 @@ export default function Footer() {
               <li>
                 <Link
                   to="/orders"
-                  className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                  className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                 >
                   <FiArrowRight
                     size={13}
-                    className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                    className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                   />
                   <span>Track Orders</span>
                 </Link>
@@ -261,11 +283,11 @@ export default function Footer() {
                 <li>
                   <Link
                     to="/profile"
-                    className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                    className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                   >
                     <FiArrowRight
                       size={13}
-                      className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                      className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                     />
                     <span>My Profile</span>
                   </Link>
@@ -275,11 +297,11 @@ export default function Footer() {
                   <li>
                     <Link
                       to="/login"
-                      className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                      className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                     >
                       <FiArrowRight
                         size={13}
-                        className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                        className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                       />
                       <span>Sign In</span>
                     </Link>
@@ -287,11 +309,11 @@ export default function Footer() {
                   <li>
                     <Link
                       to="/register"
-                      className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                      className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                     >
                       <FiArrowRight
                         size={13}
-                        className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                        className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                       />
                       <span>Create Account</span>
                     </Link>
@@ -301,9 +323,9 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Customer Care */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-dark mb-5">
+            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-white/70 mb-5">
               Customer Care
             </h3>
 
@@ -312,11 +334,11 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className="group inline-flex items-center gap-2 font-medium text-dark/80 transition-colors hover:text-dark"
+                    className="group inline-flex items-center gap-2 font-medium text-white/85 transition-colors hover:text-white"
                   >
                     <FiArrowRight
                       size={13}
-                      className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0"
+                      className="opacity-0 -ml-4 transition-all duration-200 group-hover:opacity-100 group-hover:ml-0 text-white"
                     />
                     <span>{link.label}</span>
                   </Link>
@@ -327,7 +349,7 @@ export default function Footer() {
 
           {/* Secure Payments */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-dark mb-5">
+            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-white/70 mb-5">
               Secure Payments
             </h3>
 
@@ -335,7 +357,7 @@ export default function Footer() {
               {paymentMethods.map((method) => (
                 <span
                   key={method.name}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-dark/10 bg-white/95 px-2.5 py-1.5 text-xs font-bold text-dark shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/95 px-2.5 py-1.5 text-xs font-bold text-gray-900 shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
                 >
                   <span
                     className={`h-2 w-2 rounded-full ${method.dotColor}`}
@@ -346,13 +368,13 @@ export default function Footer() {
               ))}
             </div>
 
-            <div className="mt-5 rounded-xl border border-dark/10 bg-dark/[0.06] p-3.5 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-dark">
-                <FiShield size={15} className="flex-shrink-0 text-dark" />
+            <div className="mt-5 rounded-xl border border-white/20 bg-white/10 backdrop-blur-md p-3.5 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <FiShield size={15} className="flex-shrink-0 text-white" />
                 <span>SSL Secured Checkout</span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-dark">
-                <FiCheckCircle size={15} className="flex-shrink-0 text-dark" />
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <FiCheckCircle size={15} className="flex-shrink-0 text-white" />
                 <span>100% Authentic & Safe</span>
               </div>
             </div>
@@ -361,31 +383,32 @@ export default function Footer() {
       </div>
 
       {/* Bottom Legal & Social Bar */}
-      <div className="relative border-t border-dark/15 bg-dark/[0.07]">
+      <div className="relative border-t border-white/20 bg-black/10 backdrop-blur-sm z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:pr-20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1 text-xs sm:text-sm font-medium text-dark/80 text-center md:text-left">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1 text-xs sm:text-sm font-medium text-white/80 text-center md:text-left">
               <span>
                 © {new Date().getFullYear()}{" "}
-                <span className="font-bold text-dark">BDFashions Store</span>. All
+                <span className="font-bold text-white">BDFashions Store</span>. All
                 rights reserved.
               </span>
               <span className="hidden sm:inline opacity-40">|</span>
               <Link
                 to="/privacy"
-                className="hover:text-dark hover:underline font-semibold text-xs"
+                className="hover:text-white hover:underline font-semibold text-xs"
               >
                 Privacy Policy
               </Link>
               <span className="opacity-40">|</span>
               <Link
                 to="/terms"
-                className="hover:text-dark hover:underline font-semibold text-xs"
+                className="hover:text-white hover:underline font-semibold text-xs"
               >
                 Terms of Service
               </Link>
             </div>
 
+            {/* Circular Glassy Social Buttons Matching MonsterASP */}
             <div className="flex flex-wrap items-center justify-center gap-2.5">
               {socialLinks.map(({ icon: Icon, url, label }) => (
                 <a
@@ -395,7 +418,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   aria-label={label}
                   title={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark/15 bg-white/35 text-dark backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-dark hover:bg-dark hover:text-[#FDA702] hover:shadow-md"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-white hover:bg-white hover:text-[#6d42ef] hover:shadow-lg hover:shadow-black/20"
                 >
                   <Icon size={17} />
                 </a>
