@@ -231,8 +231,8 @@ useEffect(() => {
             </span>
           </h1>
 
-          {/* Inspiring Subtitle */}
-          <p className="max-w-xl text-gray-200 sm:text-gray-300 mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed font-normal">
+          {/* Inspiring Subtitle (Hidden on mobile for sleek, ultra-clean mobile view) */}
+          <p className="hidden md:block max-w-xl text-gray-200 sm:text-gray-300 mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed font-normal">
             Discover iconic styles, luxury footwear, and timeless apparel curated by{" "}
             <span className="text-white font-semibold underline decoration-primary decoration-2 underline-offset-4">
               BDFashions
@@ -241,11 +241,11 @@ useEffect(() => {
           </p>
 
           {/* Ultra Modern Action Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3.5 sm:gap-5 mt-7 sm:mt-9">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-5 mt-5 sm:mt-9">
             {/* Primary Action Button */}
             <Link
               to="/products"
-              className="group relative inline-flex items-center justify-center gap-2.5 sm:gap-3 bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-dark font-extrabold px-7 sm:px-9 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+              className="group relative inline-flex items-center justify-center gap-2.5 sm:gap-3 bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-dark font-extrabold px-6 sm:px-9 py-3 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
             >
               <FiShoppingBag className="text-base text-dark transition-transform duration-300 group-hover:scale-110" />
               <span>Shop Collection</span>
@@ -262,7 +262,7 @@ useEffect(() => {
                   el.scrollIntoView({ behavior: "smooth" });
                 }
               }}
-              className="group inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 hover:border-white text-white font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+              className="group inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 hover:border-white text-white font-bold px-5 sm:px-8 py-3 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
             >
               <HiSparkles className="text-amber-300 text-base transition-transform duration-300 group-hover:rotate-12" />
               <span>New Arrivals</span>
@@ -270,12 +270,12 @@ useEffect(() => {
           </div>
 
           {/* Trust Highlights / Quality Badges */}
-          <div className="pt-8 sm:pt-10 flex flex-wrap items-center gap-y-3 gap-x-6 text-xs sm:text-sm text-gray-300 font-medium">
+          <div className="pt-6 sm:pt-10 flex flex-wrap items-center gap-y-2.5 gap-x-5 sm:gap-x-6 text-xs sm:text-sm text-gray-300 font-medium">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
                 <FiTruck className="text-xs sm:text-sm" />
               </div>
-              <span>Free Express Delivery</span>
+              <span>Express Delivery</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
