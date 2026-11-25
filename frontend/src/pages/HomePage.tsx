@@ -186,73 +186,85 @@ useEffect(() => {
     <main>
       <ScrollToTopButton />
       {/* HERO */}
-      <section id="hero" className="relative min-h-[100dvh] md:min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20 flex items-center">
+      <section
+        id="hero"
+        className="relative min-h-[100dvh] md:min-h-screen bg-black text-white overflow-hidden pt-16 lg:pt-20 flex items-center"
+      >
+        {/* ── Background layer ── */}
         <div className="absolute inset-0">
-          {/* Mobile Background Image (Vertical Portrait) */}
+          {/* Mobile background */}
           <img
             src={heroMobile}
             alt="BDF Hero Mobile"
             fetchPriority="high"
-            className="w-full h-full object-cover object-center opacity-70 md:hidden"
-            onError={(e) => {
-              e.currentTarget.src = "/hero-mobile.png";
-            }}
+            className="w-full h-full object-cover object-top opacity-80 md:hidden"
+            onError={(e) => { e.currentTarget.src = "/hero-mobile.png"; }}
           />
-          {/* Desktop Background Image (Horizontal Landscape) */}
+          {/* Desktop background */}
           <img
             src="/Logo of BDF.png"
             alt="BDF Hero Desktop"
             fetchPriority="high"
             className="hidden md:block w-full h-full object-cover object-center opacity-60"
-            onError={(e) => {
-              e.currentTarget.src = "/Logo of BDF.png";
-            }}
+            onError={(e) => { e.currentTarget.src = "/Logo of BDF.png"; }}
           />
-          {/* Mobile dark gradient overlay: subtle at top, rich at bottom for pristine contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/15 md:hidden" />
+
+          {/* ── Mobile overlay: multi-stop gradient for luxe depth ── */}
+          <div className="absolute inset-0 md:hidden">
+            {/* Top vignette to protect header area */}
+            <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/70 to-transparent" />
+            {/* Bottom content gradient – strong enough to read white text */}
+            <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black/95 via-black/70 to-transparent" />
+            {/* Cinematic horizontal warm tint (subtle left orange) */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-transparent to-transparent" />
+          </div>
+
           {/* Desktop cinematic horizontal gradient */}
           <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
         </div>
 
-        <div className="relative w-full max-w-7xl mx-auto px-6 py-16 sm:py-24 lg:py-32">
-          {/* Premium Capsule Tag */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-amber-300">
+        {/* ════════════════════════════════
+            MOBILE CONTENT LAYOUT
+            ════════════════════════════════ */}
+        <div className="md:hidden relative w-full flex flex-col justify-end min-h-[100dvh] pb-10 pt-24 px-5">
+
+          {/* ── Exclusive badge ── */}
+          <div className="inline-flex self-start items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-xl border border-amber-400/40 shadow-lg shadow-black/30 mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+            <span className="text-[10px] font-black tracking-[0.22em] uppercase text-amber-300 leading-none">
               Exclusive 2026 Collection
             </span>
           </div>
 
-          {/* Luxury Bold Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mt-4 leading-[1.06] tracking-tight text-white drop-shadow-md">
-            IMPOSSIBLE <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-primary">
+          {/* ── Headline ── */}
+          <h1 className="font-black leading-[1.0] tracking-tight drop-shadow-xl mb-6" style={{ fontSize: "clamp(2.6rem, 11vw, 3.4rem)" }}>
+            <span className="block text-white">IMPOSSIBLE</span>
+            <span
+              className="block"
+              style={{
+                background: "linear-gradient(90deg, #FBBF24 0%, #FDE68A 45%, #F59E0B 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
               IS NOTHING
             </span>
           </h1>
 
-          {/* Inspiring Subtitle (Hidden on mobile for sleek, ultra-clean mobile view) */}
-          <p className="hidden md:block max-w-xl text-gray-200 sm:text-gray-300 mt-4 sm:mt-6 text-sm sm:text-base md:text-lg leading-relaxed font-normal">
-            Discover iconic styles, luxury footwear, and timeless apparel curated by{" "}
-            <span className="text-white font-semibold underline decoration-primary decoration-2 underline-offset-4">
-              BDFashions
-            </span>{" "}
-            for trendsetters and everyday champions.
-          </p>
-
-          {/* Ultra Modern Action Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-5 mt-5 sm:mt-9">
-            {/* Primary Action Button */}
+          {/* ── CTA buttons – stacked full-width on mobile ── */}
+          <div className="flex flex-col gap-3 w-full mb-7">
+            {/* Primary */}
             <Link
               to="/products"
-              className="group relative inline-flex items-center justify-center gap-2.5 sm:gap-3 bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-dark font-extrabold px-6 sm:px-9 py-3 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+              className="group w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-primary to-amber-500 text-gray-900 font-black text-sm tracking-widest uppercase rounded-2xl py-4 shadow-xl shadow-amber-500/30 active:scale-[0.97] transition-all duration-200"
             >
-              <FiShoppingBag className="text-base text-dark transition-transform duration-300 group-hover:scale-110" />
+              <FiShoppingBag size={17} className="flex-shrink-0" />
               <span>Shop Collection</span>
-              <FiArrowRight className="text-base text-dark transition-transform duration-300 group-hover:translate-x-1" />
+              <FiArrowRight size={16} className="flex-shrink-0 group-active:translate-x-1 transition-transform" />
             </Link>
 
-            {/* Secondary Action Button */}
+            {/* Secondary */}
             <Link
               to="/products?new=true"
               onClick={(e) => {
@@ -262,33 +274,102 @@ useEffect(() => {
                   el.scrollIntoView({ behavior: "smooth" });
                 }
               }}
-              className="group inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 hover:border-white text-white font-bold px-5 sm:px-8 py-3 sm:py-4 rounded-full text-xs sm:text-sm tracking-wider uppercase shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+              className="group w-full inline-flex items-center justify-center gap-2.5 bg-white/[0.08] backdrop-blur-xl border border-white/25 text-white font-bold text-sm tracking-widest uppercase rounded-2xl py-4 shadow-lg active:scale-[0.97] transition-all duration-200"
             >
-              <HiSparkles className="text-amber-300 text-base transition-transform duration-300 group-hover:rotate-12" />
+              <HiSparkles size={17} className="text-amber-300 flex-shrink-0" />
               <span>New Arrivals</span>
             </Link>
           </div>
 
-          {/* Trust Highlights / Quality Badges */}
-          <div className="pt-6 sm:pt-10 flex flex-wrap items-center gap-y-2.5 gap-x-5 sm:gap-x-6 text-xs sm:text-sm text-gray-300 font-medium">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
-                <FiTruck className="text-xs sm:text-sm" />
+          {/* ── Trust badges – 2×2 grid (nicer on mobile) ── */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              { icon: FiTruck, label: "Express Delivery" },
+              { icon: FiShield, label: "100% Authentic" },
+              { icon: FiRefreshCw, label: "7-Day Exchange" },
+            ].map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2.5 bg-black/30 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2.5"
+              >
+                <span className="w-7 h-7 rounded-lg bg-amber-400/15 border border-amber-400/25 flex items-center justify-center flex-shrink-0">
+                  <Icon size={14} className="text-amber-400" />
+                </span>
+                <span className="text-[11px] font-semibold text-gray-200 leading-tight">{label}</span>
               </div>
-              <span>Express Delivery</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
-                <FiShield className="text-xs sm:text-sm" />
+            ))}
+          </div>
+        </div>
+
+        {/* ════════════════════════════════
+            DESKTOP CONTENT LAYOUT (unchanged)
+            ════════════════════════════════ */}
+        <div className="hidden md:block relative w-full max-w-7xl mx-auto px-6 py-24 lg:py-32">
+          {/* Premium Capsule Tag */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xl">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-300">
+              Exclusive 2026 Collection
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-6xl md:text-7xl font-black mt-4 leading-[1.06] tracking-tight text-white drop-shadow-md">
+            IMPOSSIBLE <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-primary">
+              IS NOTHING
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="max-w-xl text-gray-300 mt-6 text-lg leading-relaxed">
+            Discover iconic styles, luxury footwear, and timeless apparel curated by{" "}
+            <span className="text-white font-semibold underline decoration-primary decoration-2 underline-offset-4">
+              BDFashions
+            </span>{" "}
+            for trendsetters and everyday champions.
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-5 mt-9">
+            <Link
+              to="/products"
+              className="group inline-flex items-center gap-3 bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-dark font-extrabold px-9 py-4 rounded-full text-sm tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
+            >
+              <FiShoppingBag className="text-dark group-hover:scale-110 transition-transform" />
+              <span>Shop Collection</span>
+              <FiArrowRight className="text-dark group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              to="/products?new=true"
+              onClick={(e) => {
+                const el = document.getElementById("new");
+                if (el && window.location.pathname === "/") {
+                  e.preventDefault();
+                  el.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              className="group inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 hover:border-white text-white font-bold px-8 py-4 rounded-full text-sm tracking-wider uppercase shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-300"
+            >
+              <HiSparkles className="text-amber-300 group-hover:rotate-12 transition-transform" />
+              <span>New Arrivals</span>
+            </Link>
+          </div>
+
+          {/* Trust Highlights */}
+          <div className="pt-10 flex items-center gap-6 text-sm text-gray-300 font-medium">
+            {[
+              { icon: FiTruck, label: "Express Delivery" },
+              { icon: FiShield, label: "100% Authentic Quality" },
+              { icon: FiRefreshCw, label: "Easy 7-Day Exchange" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary">
+                  <Icon size={14} />
+                </div>
+                <span>{label}</span>
               </div>
-              <span>100% Authentic Quality</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-primary shrink-0">
-                <FiRefreshCw className="text-xs sm:text-sm" />
-              </div>
-              <span>Easy 7-Day Exchange</span>
-            </div>
+            ))}
           </div>
         </div>
       </section>
