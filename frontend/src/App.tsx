@@ -98,6 +98,21 @@ function ScrollToTop() {
     if (hash) return;
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname, hash]);
+
+  // Keep Render backend warm and awake during active user sessions
+  useEffect(() => {
+    const pingBackend = () => {
+      fetch("https://ecommerce-backend-api-j6z4.onrender.com/health", {
+        method: "GET",
+        mode: "no-cors",
+        cache: "no-store",
+      }).catch(() => {});
+    };
+    pingBackend();
+    const timer = setInterval(pingBackend, 10 * 60 * 1000); // Every 10 mins
+    return () => clearInterval(timer);
+  }, []);
+
   return null;
 }
 

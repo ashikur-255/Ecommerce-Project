@@ -270,7 +270,13 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=2592000,immutable");
+    }
+});
 app.UseAuthentication();
 app.UseAuthorization();
 

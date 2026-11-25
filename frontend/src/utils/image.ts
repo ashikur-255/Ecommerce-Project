@@ -144,8 +144,8 @@ export const getFallbackCategoryImage = (name?: string): string => {
 
 /**
  * Robust image error handler for product images:
- * 1. If failed on remote /uploads/..., tries the local frontend static /uploads/...
- * 2. If that fails or not applicable, falls back to matching category/name product image with index awareness
+ * Immediately falls back to matching category/name product image with index awareness.
+ * Eliminates redundant failed attempts on /uploads/.
  */
 export const handleImageError = (
   e: React.SyntheticEvent<HTMLImageElement, Event>,
@@ -154,17 +154,6 @@ export const handleImageError = (
   index: number = 0
 ) => {
   const target = e.currentTarget;
-  const currentSrc = target.src || "";
-
-  // 1. If failed on remote /uploads/..., try local frontend static /uploads/...
-  if (currentSrc.includes("/uploads/") && !target.dataset.triedLocalUpload) {
-    target.dataset.triedLocalUpload = "true";
-    const uploadIndex = currentSrc.indexOf("/uploads/");
-    target.src = currentSrc.substring(uploadIndex);
-    return;
-  }
-
-  // 2. Fall back to smart category/name image with index distinction
   target.onerror = null;
   target.src = getFallbackProductImage(category, name, index);
 };
@@ -177,15 +166,6 @@ export const handleCategoryImageError = (
   categoryName?: string
 ) => {
   const target = e.currentTarget;
-  const currentSrc = target.src || "";
-
-  if (currentSrc.includes("/uploads/") && !target.dataset.triedLocalUpload) {
-    target.dataset.triedLocalUpload = "true";
-    const uploadIndex = currentSrc.indexOf("/uploads/");
-    target.src = currentSrc.substring(uploadIndex);
-    return;
-  }
-
   target.onerror = null;
   target.src = getFallbackCategoryImage(categoryName);
 };
@@ -234,17 +214,19 @@ export const getImageUrl = (path?: string | null): string => {
 };
 
 /**
- * Get the full URL for a category image with smart category fallback
+ * Get the full URL for a category image with smart category fallback.
+ * Automatically maps to pristine CDN category images if path is empty or an ephemeral /uploads/ path.
  */
 export const getCategoryImageUrl = (path?: string | null, categoryName?: string): string => {
-  if (!path || !path.trim()) {
+  if (!path || !path.trim() || path.includes("/uploads/categories/")) {
     return getFallbackCategoryImage(categoryName);
   }
   return getImageUrl(path);
 };
 
 /**
- * Get the full URL for a product image with category fallback and index awareness
+ * Get the full URL for a product image with category fallback and index awareness.
+ * Automatically maps to crisp CDN product assets if path is empty or an ephemeral /uploads/ path.
  */
 export const getProductImageUrl = (
   path?: string | null,
@@ -255,7 +237,25 @@ export const getProductImageUrl = (
   if (!path || !path.trim()) {
     return getFallbackProductImage(category, name, index);
   }
-  return getImageUrl(path);
+
+  const trimmed = path.trim();
+
+  // If already full remote URL (e.g. Unsplash, Cloudinary, AWS S3)
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+    return trimmed;
+  }
+
+  // If already a local static public asset
+  if (trimmed.startsWith("/products/") || trimmed.startsWith("/categories/")) {
+    return trimmed;
+  }
+
+  // If it's an ephemeral /uploads/ path, immediately serve local CDN asset without waiting for Render
+  if (trimmed.startsWith("/uploads/products/")) {
+    return getFallbackProductImage(category, name, index);
+  }
+
+  return getImageUrl(trimmed);
 };
 
 /**

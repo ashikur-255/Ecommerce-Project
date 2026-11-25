@@ -192,6 +192,7 @@ useEffect(() => {
           <img
             src={heroMobile}
             alt="BDF Hero Mobile"
+            fetchPriority="high"
             className="w-full h-full object-cover object-center opacity-70 md:hidden"
             onError={(e) => {
               e.currentTarget.src = "/hero-mobile.png";
@@ -201,9 +202,10 @@ useEffect(() => {
           <img
             src="/Logo of BDF.png"
             alt="BDF Hero Desktop"
+            fetchPriority="high"
             className="hidden md:block w-full h-full object-cover object-center opacity-60"
             onError={(e) => {
-              e.currentTarget.src = "/src/assets/Logo of BDF.png";
+              e.currentTarget.src = "/Logo of BDF.png";
             }}
           />
           {/* Mobile dark gradient overlay: subtle at top, rich at bottom for pristine contrast */}
